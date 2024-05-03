@@ -5,6 +5,7 @@ script_version("1.31")
 local scr = thisScript()
 local hook = require 'lib.samp.events'
 local encoding = require('encoding')
+local dlstatus = require("moonloader").download_status
 local imgui = require 'mimgui'
 local ffi = require 'ffi'
 encoding.default = 'CP1251'
@@ -82,6 +83,7 @@ local actual = {
 --- mimgui
 local new, str = imgui.new, ffi.string
 local WinState = new.bool()
+local WinUpdState = new.bool()
 local imQuestBots = new.bool(settings.main.qb)
 local imQuestBomj = new.bool(settings.main.bomj)
 local imLavka = new.bool(settings.main.lavka)
@@ -159,12 +161,19 @@ imgui.OnInitialize(function()
     iconRanges = imgui.new.ImWchar[3](faicons.min_range, faicons.max_range, 0)
     imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(faicons.get_font_data_base85('solid'), 14, config, iconRanges)
 end)
+imgui.OnFrame(function() return WinUpdState[0] end,
+	function(player)
+        imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+        imgui.SetNextWindowSize(imgui.ImVec2(500, 320), imgui.Cond.Always)
+		imgui.Begin(faicons('poo')..u8'Есть обновление до версии v'..newversion, WinUpdState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
+		imgui.End()
+    end
+)
 imgui.OnFrame(function() return WinState[0] end,
     function(player)
         imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(500, 320), imgui.Cond.Always)
         imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version, WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
-
 		if imgui.CollapsingHeader(faicons('gear')..u8" Основные") then
 			imgui.Text(faicons('gear'))
 			if imgui.IsItemHovered() then
@@ -461,6 +470,23 @@ imgui.OnFrame(function() return WinState[0] end,
 				imgui.TextDisabled(u8(settings.main.TelegramChat))
 			end
 		end	
+		imgui.Separator()
+		if imgui.CollapsingHeader(faicons('envelope')..u8" Обновление") then
+			if newversion != scr.version then
+				if imgui.Button('Обновить до v'..newversion) then
+					updateScript()
+				end
+			end
+			imgui.TextColoredRGB("{F8A436}Что было добавлено в прошлый раз: ")
+			imgui.Spacing()
+			imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
+				if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then
+					for line in io.lines(getWorkingDirectory().."/config/rmnspt/update.txt") do
+						imgui.TextColoredRGB(line:gsub("*n*", "\n"))
+					end
+				end
+			imgui.EndChild()
+		end
         imgui.End()
     end
 )
@@ -478,6 +504,7 @@ function main()
 	end
 	wait(1000)
 	sampAddChatMessage(SCRIPT_PREFIX .."Успешная загрузка скрипта. Используйте: ".. COLOR_MAIN .."/nespit{FFFFFF}. Автор: "..COLOR_MAIN.."romanespit", SCRIPT_COLOR)
+	updateCheck()
 	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
 	sampRegisterChatCommand('bcl', cleanStreamMemoryBuffer)
@@ -600,7 +627,7 @@ function updateScript()
 	downloadUrlToFile(url, dir, function(id, status, p1, p2)
 		if status == dlstatus.STATUSEX_ENDDOWNLOAD then
 			if updates == nil then 
-				print("{FF0000}Ошибка при попытке скачать файл.") 
+				print("{FF0000}Ошибка при попытке обновиться.") 
 				addOneOffSound(0, 0, 0, 1058)
 				sampAddChatMessage(SCRIPT_PREFIX .."Произошла ошибка при скачивании обновления. Попробуйте позднее...", SCRIPT_COLOR)
 			end
@@ -616,14 +643,14 @@ function updateScript()
 end
 function updateCheck()
 	sampAddChatMessage(SCRIPT_PREFIX .."Проверяем наличие обновлений...", SCRIPT_COLOR)
-		local dir = dirml.."/config/rmnspt/info.upd"
+		local dir = getWorkingDirectory().."/config/rmnspt/info.upd"
 		local url = "https://github.com/romanespit/ArizonaMultitool/raw/main/config/rmnspt/info.upd"
 		downloadUrlToFile(url, dir, function(id, status, p1, p2)
 			if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 				lua_thread.create(function()
 				wait(1000)
-				if doesFileExist(dirml.."/config/rmnspt/info.upd") then
-					local f = io.open(dirml.."/config/rmnspt/info.upd", "r")
+				if doesFileExist(getWorkingDirectory().."/config/rmnspt/info.upd") then
+					local f = io.open(getWorkingDirectory().."/config/rmnspt/info.upd", "r")
 					local upd = decodeJson(f:read("*a"))
 					f:close()
 					if type(upd) == "table" then
@@ -636,6 +663,19 @@ function updateCheck()
 					end
 				end
 
+				end)
+			end
+		end)		
+		dir = getWorkingDirectory().."/config/rmnspt/update.txt"
+		url = "https://github.com/romanespit/ArizonaMultitool/raw/main/config/rmnspt/update.txt"
+		downloadUrlToFile(url, dir, function(id, status, p1, p2)
+			if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+				lua_thread.create(function()
+					wait(1000)
+					if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then
+						local f = io.open(getWorkingDirectory().."/config/rmnspt/update.txt", "r")
+						f:close()
+					end
 				end)
 			end
 		end)

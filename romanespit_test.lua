@@ -636,7 +636,7 @@ function updateScript()
 			updates = true
 			print("Загрузка закончена")
 			sampAddChatMessage(SCRIPT_PREFIX .."Скачивание завершено, перезагрузка библиотек...", SCRIPT_COLOR)
-			reloadScripts()
+			scr:reload()
 			showCursor(false)
 		end
 	end)

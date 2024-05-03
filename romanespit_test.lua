@@ -464,11 +464,11 @@ imgui.OnFrame(function() return WinState[0] end,
 		imgui.Separator()
 		if imgui.CollapsingHeader(faicons('envelope')..u8" Обновление") then
 			if newversion ~= scr.version then
-				if imgui.Button(faicons('rotate')..u8'Обновить до v'..newversion) then
+				if imgui.Button(faicons('rotate')..u8' Обновить до v'..newversion) then
 					updateScript()
 				end
 			end
-			imgui.TextColoredRGB(faicons('rotate').."{F8A436}Что было добавлено в v"..newversion)
+			imgui.TextColoredRGB("{F8A436}Что было добавлено в v"..newversion)
 			imgui.Spacing()
 			imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
 				if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then

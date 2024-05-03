@@ -1,6 +1,6 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
-script_version("1.31")
+script_version("1.32")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -636,7 +636,7 @@ function updateScript()
 		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 			updates = true
 			print("Загрузка закончена")
-			sampAddChatMessage(SCRIPT_PREFIX .."Скачивание завершено, перезагрузка библиотек...", SCRIPT_COLOR)
+			sampAddChatMessage(SCRIPT_PREFIX .."Скачивание завершено, перезагрузка скрипта...", SCRIPT_COLOR)
 			scr:reload()
 			showCursor(false)
 		end

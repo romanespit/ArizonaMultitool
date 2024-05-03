@@ -163,7 +163,7 @@ end)
 imgui.OnFrame(function() return WinState[0] end,
     function(player)
         imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(500, 320), imgui.Cond.Always)
+        imgui.SetNextWindowSize(imgui.ImVec2(500, 420), imgui.Cond.Always)
         imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version, WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
 		if imgui.CollapsingHeader(faicons('gear')..u8" Основные") then
 			imgui.Text(faicons('gear'))

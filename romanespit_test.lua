@@ -498,6 +498,8 @@ function main()
 	updateCheck()
 	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
+	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)
+	
 	sampRegisterChatCommand('bcl', cleanStreamMemoryBuffer)
 	sampRegisterChatCommand("settgtoken", function(par)
 		if par:find(".+") then

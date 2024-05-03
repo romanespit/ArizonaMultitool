@@ -1,6 +1,6 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
-script_version("1.33")
+script_version("1.34")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -73,7 +73,7 @@ myid = -1
 newversion = ""
 caseTimers = {settings.cases.Default,settings.cases.Platinum,settings.cases.Elon}
 caseName = {"рулетки","платиновой рулетки","Илона Маска"}
-myNick = ""
+myNick = " "
 -- time/weather
 local memory = require "memory"
 local actual = {
@@ -495,6 +495,7 @@ function main()
 	sampAddChatMessage(SCRIPT_PREFIX .."Успешная загрузка скрипта. Используйте: ".. COLOR_MAIN .."/nespit{FFFFFF}. Автор: "..COLOR_MAIN.."romanespit{FFFFFF}. Версия: "..scr.version, SCRIPT_COLOR)
 	updateCheck()
 	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+	myNick = sampGetPlayerNickname(myid)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
 	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)
 	
@@ -551,6 +552,9 @@ function main()
 		else
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /setphonevc [phone]", SCRIPT_COLOR)
 		end
+	end)
+	sampRegisterChatCommand("nespit_test", function()		
+		Logger(myNick)
 	end)
 	sampRegisterChatCommand("nespit_dialog", function(par)		
 		if par:find("([0-9%a%s]+)") then

@@ -624,6 +624,7 @@ function updateScript()
 	sampAddChatMessage(SCRIPT_PREFIX .."Производится скачивание новой версии скрипта...", SCRIPT_COLOR)
 	local dir = getWorkingDirectory().."/romanespit_test.lua"
 	local url = "https://github.com/romanespit/ArizonaMultitool/blob/main/romanespit_test.lua?raw=true"
+	local updates = nil
 	downloadUrlToFile(url, dir, function(id, status, p1, p2)
 		if status == dlstatus.STATUSEX_ENDDOWNLOAD then
 			if updates == nil then 

@@ -462,7 +462,7 @@ imgui.OnFrame(function() return WinState[0] end,
 			end
 		end	
 		imgui.Separator()
-		if imgui.CollapsingHeader(faicons('envelope')..u8" Обновление") then
+		if imgui.CollapsingHeader(faicons('rotate')..u8" Обновление") then
 			if newversion ~= scr.version then
 				if imgui.Button(faicons('rotate')..u8' Обновить до v'..newversion) then
 					updateScript()

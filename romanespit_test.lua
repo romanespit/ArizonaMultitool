@@ -1,6 +1,6 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
-script_version("1.32")
+script_version("1.33")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -83,7 +83,6 @@ local actual = {
 --- mimgui
 local new, str = imgui.new, ffi.string
 local WinState = new.bool()
-local WinUpdState = new.bool()
 local imQuestBots = new.bool(settings.main.qb)
 local imQuestBomj = new.bool(settings.main.bomj)
 local imLavka = new.bool(settings.main.lavka)
@@ -161,14 +160,6 @@ imgui.OnInitialize(function()
     iconRanges = imgui.new.ImWchar[3](faicons.min_range, faicons.max_range, 0)
     imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(faicons.get_font_data_base85('solid'), 14, config, iconRanges)
 end)
-imgui.OnFrame(function() return WinUpdState[0] end,
-	function(player)
-        imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(500, 320), imgui.Cond.Always)
-		imgui.Begin(faicons('poo')..u8'Есть обновление до версии v'..newversion, WinUpdState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
-		imgui.End()
-    end
-)
 imgui.OnFrame(function() return WinState[0] end,
     function(player)
         imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -502,8 +493,8 @@ function main()
 		local nowTime = os.time()
 		timer = nowTime + 30
 	end
-	wait(1000)
-	sampAddChatMessage(SCRIPT_PREFIX .."Успешная загрузка скрипта. Используйте: ".. COLOR_MAIN .."/nespit{FFFFFF}. Автор: "..COLOR_MAIN.."romanespit", SCRIPT_COLOR)
+	repeat wait(100) until sampIsLocalPlayerSpawned()
+	sampAddChatMessage(SCRIPT_PREFIX .."Успешная загрузка скрипта. Используйте: ".. COLOR_MAIN .."/nespit{FFFFFF}. Автор: "..COLOR_MAIN.."romanespit{FFFFFF}. Версия: "..scr.version, SCRIPT_COLOR)
 	updateCheck()
 	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
@@ -574,8 +565,10 @@ function main()
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /nespit_dialog [id file]", SCRIPT_COLOR)
 		end
 	end)
-	local audio = loadAudioStream('moonloader/config/rmnspt/alert.mp3')
-	setAudioStreamVolume(audio, 0.1)
+	if doesFileExist('moonloader/config/rmnspt/alert.mp3') then
+		local audio = loadAudioStream('moonloader/config/rmnspt/alert.mp3')
+		setAudioStreamVolume(audio, 0.1)
+	end
 	while true do
 		if secTimer:status() == "dead" then
 			secTimer = lua_thread.create(function()
@@ -587,7 +580,7 @@ function main()
 							if setting.cases.isTurned then
 								sampAddChatMessage(SCRIPT_PREFIX .."Используй сундук "..caseName[i], SCRIPT_COLOR)
 								caseTimers[i] = 300
-								setAudioStreamState(audio, 1)
+								if doesFileExist('moonloader/config/rmnspt/alert.mp3') then setAudioStreamState(audio, 1) end
 							end
 						end
 					end

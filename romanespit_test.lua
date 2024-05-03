@@ -472,12 +472,12 @@ imgui.OnFrame(function() return WinState[0] end,
 		end	
 		imgui.Separator()
 		if imgui.CollapsingHeader(faicons('envelope')..u8" Обновление") then
-			if newversion != scr.version then
-				if imgui.Button('Обновить до v'..newversion) then
+			if newversion ~= scr.version then
+				if imgui.Button(u8'Обновить до v'..newversion) then
 					updateScript()
 				end
 			end
-			imgui.TextColoredRGB("{F8A436}Что было добавлено в прошлый раз: ")
+			imgui.TextColoredRGB("{F8A436}Что было добавлено в v"..newversion)
 			imgui.Spacing()
 			imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
 				if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then
@@ -1098,4 +1098,61 @@ function hook.onShowDialog(id, style, title, button1, button2, text)
 	end
 	title = title.." | ID: "..id
 	return {id,style,title,button1,button2,text}
+end
+function imgui.TextColoredRGB(string, max_float)
+
+	local style = imgui.GetStyle()
+	local colors = style.Colors
+	local clr = imgui.Col
+	local u8 = require 'encoding'.UTF8
+
+	local function color_imvec4(color)
+		if color:upper():sub(1, 6) == 'SSSSSS' then return imgui.ImVec4(colors[clr.Text].x, colors[clr.Text].y, colors[clr.Text].z, tonumber(color:sub(7, 8), 16) and tonumber(color:sub(7, 8), 16)/255 or colors[clr.Text].w) end
+		local color = type(color) == 'number' and ('%X'):format(color):upper() or color:upper()
+		local rgb = {}
+		for i = 1, #color/2 do rgb[#rgb+1] = tonumber(color:sub(2*i-1, 2*i), 16) end
+		return imgui.ImVec4(rgb[1]/255, rgb[2]/255, rgb[3]/255, rgb[4] and rgb[4]/255 or colors[clr.Text].w)
+	end
+
+	local function render_text(string)
+		for w in string:gmatch('[^\r\n]+') do
+			local text, color = {}, {}
+			local render_text = 1
+			local m = 1
+			if w:sub(1, 8) == '[center]' then
+				render_text = 2
+				w = w:sub(9)
+			elseif w:sub(1, 7) == '[right]' then
+				render_text = 3
+				w = w:sub(8)
+			end
+			w = w:gsub('{(......)}', '{%1FF}')
+			while w:find('{........}') do
+				local n, k = w:find('{........}')
+				if tonumber(w:sub(n+1, k-1), 16) or (w:sub(n+1, k-3):upper() == 'SSSSSS' and tonumber(w:sub(k-2, k-1), 16) or w:sub(k-2, k-1):upper() == 'SS') then
+					text[#text], text[#text+1] = w:sub(m, n-1), w:sub(k+1, #w)
+					color[#color+1] = color_imvec4(w:sub(n+1, k-1))
+					w = w:sub(1, n-1)..w:sub(k+1, #w)
+					m = n
+				else w = w:sub(1, n-1)..w:sub(n, k-3)..'}'..w:sub(k+1, #w) end
+			end
+			local length = imgui.CalcTextSize(u8(w))
+			if render_text == 2 then
+				imgui.NewLine()
+				imgui.SameLine(max_float / 2 - ( length.x / 2 ))
+			elseif render_text == 3 then
+				imgui.NewLine()
+				imgui.SameLine(max_float - length.x - 5 )
+			end
+			if text[0] then
+				for i, k in pairs(text) do
+					imgui.TextColored(color[i] or colors[clr.Text], u8(k))
+					imgui.SameLine(nil, 0)
+				end
+				imgui.NewLine()
+			else imgui.Text(u8(w)) end
+		end
+	end
+	
+	render_text(string)
 end

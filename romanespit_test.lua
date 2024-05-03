@@ -69,6 +69,7 @@ timer = -1
 zeksText = 'Пусто'
 zeki = {}
 myid = -1
+newversion = ""
 caseTimers = {settings.cases.Default,settings.cases.Platinum,settings.cases.Elon}
 caseName = {"рулетки","платиновой рулетки","Илона Маска"}
 myNick = ""
@@ -592,6 +593,55 @@ function main()
   end  
   wait(-1)
 end
+function updateScript()
+	sampAddChatMessage(SCRIPT_PREFIX .."Производится скачивание новой версии скрипта...", SCRIPT_COLOR)
+	local dir = getWorkingDirectory().."/romanespit_test.lua"
+	local url = "https://github.com/romanespit/ArizonaMultitool/blob/main/romanespit_test.lua?raw=true"
+	downloadUrlToFile(url, dir, function(id, status, p1, p2)
+		if status == dlstatus.STATUSEX_ENDDOWNLOAD then
+			if updates == nil then 
+				print("{FF0000}Ошибка при попытке скачать файл.") 
+				addOneOffSound(0, 0, 0, 1058)
+				sampAddChatMessage(SCRIPT_PREFIX .."Произошла ошибка при скачивании обновления. Попробуйте позднее...", SCRIPT_COLOR)
+			end
+		end
+		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+			updates = true
+			print("Загрузка закончена")
+			sampAddChatMessage(SCRIPT_PREFIX .."Скачивание завершено, перезагрузка библиотек...", SCRIPT_COLOR)
+			reloadScripts()
+			showCursor(false)
+		end
+	end)
+end
+function updateCheck()
+	sampAddChatMessage(SCRIPT_PREFIX .."Проверяем наличие обновлений...", SCRIPT_COLOR)
+		local dir = dirml.."/config/rmnspt/info.upd"
+		local url = "https://github.com/romanespit/ArizonaMultitool/raw/main/config/rmnspt/info.upd"
+		downloadUrlToFile(url, dir, function(id, status, p1, p2)
+			if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+				lua_thread.create(function()
+				wait(1000)
+				if doesFileExist(dirml.."/config/rmnspt/info.upd") then
+					local f = io.open(dirml.."/config/rmnspt/info.upd", "r")
+					local upd = decodeJson(f:read("*a"))
+					f:close()
+					if type(upd) == "table" then
+					newversion = upd.version
+						if upd.version == scr.version then
+							sampAddChatMessage(SCRIPT_PREFIX .."Вы используете актуальную версию скрипта - v"..scr.version, SCRIPT_COLOR)
+						else
+							sampAddChatMessage(SCRIPT_PREFIX .."Имеется обновление до версии v"..newversion.."! Открой меню скрипта и обнови его!", SCRIPT_COLOR)
+						end
+					end
+				end
+
+				end)
+			end
+		end)
+end
+
+
 function cleanStreamMemoryBuffer()
 	Logger("Буфер памяти был очищен ("..tostring(memory.read(0x8E4CB4, 4, true))..")")
 	local huy = callFunction(0x53C500, 2, 2, true, true)

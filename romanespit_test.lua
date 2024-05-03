@@ -579,7 +579,7 @@ function main()
 					if caseTimers[i] ~= -1 then 
 						caseTimers[i] = caseTimers[i]-1					
 						if caseTimers[i] == -1 then
-							if setting.cases.isTurned then
+							if settings.cases.isTurned then
 								sampAddChatMessage(SCRIPT_PREFIX .."Используй сундук "..caseName[i], SCRIPT_COLOR)
 								caseTimers[i] = 300
 								if doesFileExist('moonloader/config/rmnspt/alert.mp3') then setAudioStreamState(audio, 1) end

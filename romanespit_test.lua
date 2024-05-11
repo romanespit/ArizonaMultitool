@@ -1,7 +1,7 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
 script_url("https://github.com/romanespit/ArizonaMultitool")
-script_version("1.35")
+script_version("1.35.1-hotfix")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -191,6 +191,12 @@ imgui.OnFrame(function() return WinState[0] end,
 			imgui.TextDisabled(u8(settings.main.PhNumber))	
 			imgui.SameLine()
 			imgui.Text(faicons('question'))
+			if imgui.IsItemHovered() then
+				imgui.BeginTooltip()
+				imgui.Text(u8'Вы можете писать в чат (alo) или (алло) - текст будет заменен на указанный номер')
+				imgui.Text(u8'Также вы можете написать (id) или (ид) - будет подставлен ваш ID')
+				imgui.EndTooltip()
+			end 
 			if imgui.IsItemClicked() then
 				sampAddChatMessage(SCRIPT_PREFIX .."Вы можете писать в чат "..COLOR_YES.."(alo)"..COLOR_WHITE.." или "..COLOR_YES.."(алло)"..COLOR_WHITE.." - текст будет заменен на указанный номер", SCRIPT_COLOR)
 				sampAddChatMessage(SCRIPT_PREFIX .."Также вы можете написать "..COLOR_YES.."(id)"..COLOR_WHITE.." или "..COLOR_YES.."(ид)"..COLOR_WHITE.." - будет подставлен ваш ID", SCRIPT_COLOR)
@@ -209,6 +215,12 @@ imgui.OnFrame(function() return WinState[0] end,
 			imgui.TextDisabled(u8(settings.main.PhNumberVice))	
 			imgui.SameLine()
 			imgui.Text(faicons('question'))
+			if imgui.IsItemHovered() then
+				imgui.BeginTooltip()
+				imgui.Text(u8'Вы можете писать в чат (alo) или (алло) - текст будет заменен на указанный номер')
+				imgui.Text(u8'Также вы можете написать (id) или (ид) - будет подставлен ваш ID')
+				imgui.EndTooltip()
+			end 
 			if imgui.IsItemClicked() then
 				sampAddChatMessage(SCRIPT_PREFIX .."Вы можете писать в чат "..COLOR_YES.."(alo)"..COLOR_WHITE.." или "..COLOR_YES.."(алло)"..COLOR_WHITE.." - текст будет заменен на указанный номер", SCRIPT_COLOR)
 				sampAddChatMessage(SCRIPT_PREFIX .."Также вы можете написать "..COLOR_YES.."(id)"..COLOR_WHITE.." или "..COLOR_YES.."(ид)"..COLOR_WHITE.." - будет подставлен ваш ID", SCRIPT_COLOR)
@@ -507,7 +519,18 @@ function main()
 	end
 	repeat wait(100) until sampIsLocalPlayerSpawned()
 	sampAddChatMessage(SCRIPT_PREFIX .."Успешная загрузка скрипта. Используйте: ".. COLOR_MAIN .."/nespit{FFFFFF}. Автор: "..COLOR_MAIN.."romanespit", SCRIPT_COLOR)
-	updateCheck()	
+	updateCheck()
+	sampRegisterChatCommand('nespit_cmd', function() 
+		sampAddChatMessage(SCRIPT_PREFIX .."Команды скрипта:", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/nespit{FFFFFF} - главное меню", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/bcl{FFFFFF} - очистить память игры", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/rlavka{FFFFFF} - включить рендер кругов вокруг переносных лавок", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/settgtoken{FFFFFF} - указать новый токен Telegram уведомлений", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/settgchat{FFFFFF} - указать новый chatid Telegram уведомлений", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setpin{FFFFFF} - указать новый PIN для автоввода в банке/приложении", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setphone{FFFFFF} - указать новый телефон SA для авто замены (алло) и (alo)", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setphonevc{FFFFFF} - указать новый телефон VC для авто замены (алло) и (alo)", SCRIPT_COLOR)
+	end)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
 	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)	
 	sampRegisterChatCommand('bcl', cleanStreamMemoryBuffer)
@@ -586,7 +609,7 @@ function main()
 		end
 	end)
 	if doesFileExist('moonloader/config/rmnspt/alert.mp3') then
-		local audio = loadAudioStream('moonloader/config/rmnspt/alert.mp3')
+		audio = loadAudioStream('moonloader/config/rmnspt/alert.mp3')
 		setAudioStreamVolume(audio, 0.1)
 	end
 	while true do
@@ -672,7 +695,7 @@ function updateCheck()
 							newversion = upd.version
 							newdate = upd.release_date
 							if upd.version == scr.version then
-								sampAddChatMessage(SCRIPT_PREFIX .."Вы используете актуальную версию скрипта - v"..scr.version.."от "..newdate, SCRIPT_COLOR)
+								sampAddChatMessage(SCRIPT_PREFIX .."Вы используете актуальную версию скрипта - v"..scr.version.." от "..newdate, SCRIPT_COLOR)
 							else
 								sampAddChatMessage(SCRIPT_PREFIX .."Имеется обновление до версии v"..newversion.." от "..newdate.."! Открой меню скрипта и обнови его!", SCRIPT_COLOR)
 							end

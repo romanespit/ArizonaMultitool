@@ -1,6 +1,7 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
-script_version("1.34")
+script_url("https://github.com/romanespit/ArizonaMultitool")
+script_version("1.35")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -67,13 +68,14 @@ COLOR_WHITE = '{ffffff}'
 SCRIPT_PREFIX = '[ romanespit ]{FFFFFF}: '
 font = renderCreateFont("Trebuchet MS", 12, 5)
 timer = -1
+RadiusLavki = false
 zeksText = 'Ïóñòî'
 zeki = {}
 myid = -1
 newversion = ""
+newdate = ""
 caseTimers = {settings.cases.Default,settings.cases.Platinum,settings.cases.Elon}
 caseName = {"ğóëåòêè","ïëàòèíîâîé ğóëåòêè","Èëîíà Ìàñêà"}
-myNick = " "
 -- time/weather
 local memory = require "memory"
 local actual = {
@@ -86,6 +88,7 @@ local WinState = new.bool()
 local imQuestBots = new.bool(settings.main.qb)
 local imQuestBomj = new.bool(settings.main.bomj)
 local imLavka = new.bool(settings.main.lavka)
+local imRLavka = new.bool(RadiusLavki)
 local imKirka = new.bool(settings.main.kirka)
 local imAutoClean = new.bool(settings.clearMem.AutoCleaner)
 local imAutoeat = new.bool(settings.main.autoeat)
@@ -148,10 +151,7 @@ function onScriptTerminate(scr, is_quit)
 	end
 end
 
-function hook.onSendSpawn()
-	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-	myNick = sampGetPlayerNickname(myid)
-end
+
 imgui.OnInitialize(function()
     imgui.GetIO().IniFilename = nil
     local config = imgui.ImFontConfig()
@@ -164,7 +164,7 @@ imgui.OnFrame(function() return WinState[0] end,
     function(player)
         imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(500, 420), imgui.Cond.Always)
-        imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version, WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
+        imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version..' ('..newdate..')', WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
 		if imgui.CollapsingHeader(faicons('gear')..u8" Îñíîâíûå") then
 			imgui.Text(faicons('gear'))
 			if imgui.IsItemHovered() then
@@ -280,6 +280,14 @@ imgui.OnFrame(function() return WinState[0] end,
 					sampAddChatMessage(SCRIPT_PREFIX .."Óâåäîìëåíèÿ î ëàâêàõ ".. COLOR_YES .."âêëş÷åíû", SCRIPT_COLOR)
 				else
 					sampAddChatMessage(SCRIPT_PREFIX .."Óâåäîìëåíèÿ î ëàâêàõ ".. COLOR_NO .."âûêëş÷åíû", SCRIPT_COLOR)
+				end
+			end
+			if imgui.Checkbox(u8'Ğàäèóñ ïåğåíîñíûõ ëàâîê '..faicons('store'), imRLavka) then
+				RadiusLavki = not RadiusLavki
+				if RadiusLavki then
+					sampAddChatMessage(SCRIPT_PREFIX .."Ğàäèóñ ïåğåíîñíûõ ëàâîê ".. COLOR_YES .."âêëş÷åí", SCRIPT_COLOR)
+				else
+					sampAddChatMessage(SCRIPT_PREFIX .."Ğàäèóñ ïåğåíîñíûõ ëàâîê ".. COLOR_NO .."âûêëş÷åí", SCRIPT_COLOR)
 				end
 			end
 			if imgui.Combo(u8'Ëîãèğîâàíèå '..faicons('pen'),imLoggingCombo,imLoggingItems, #imLoggingList) then
@@ -467,7 +475,7 @@ imgui.OnFrame(function() return WinState[0] end,
 					updateScript()
 				end
 			end
-			imgui.TextColoredRGB("{F8A436}×òî áûëî äîáàâëåíî â v"..newversion)
+			imgui.TextColoredRGB("{F8A436}×òî áûëî äîáàâëåíî â v"..newversion..' îò '..newdate)
 			imgui.Spacing()
 			imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
 				if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then
@@ -487,18 +495,21 @@ function main()
 	thread = lua_thread.create(function() return end)
 	secTimer = lua_thread.create(function() return end)
 	userscreenX, userscreenY = getScreenResolution()
+	
+	sampRegisterChatCommand('nespit_test', function()		
+		sampAddChatMessage(SCRIPT_PREFIX .."Çäåñü áûëà ñåêğåòíàÿ êîìàíäà, êîòîğóş ÿ èñïîëüçîâàë äëÿ ğàçëè÷íûõ", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .."Íî ïåğåä ğåëèçîì ÿ å¸ âûïèëèë", SCRIPT_COLOR)
+	end)
+
 	if settings.AdvokatHelper.adhAutoUpdate then
 		local nowTime = os.time()
 		timer = nowTime + 30
 	end
 	repeat wait(100) until sampIsLocalPlayerSpawned()
-	sampAddChatMessage(SCRIPT_PREFIX .."Óñïåøíàÿ çàãğóçêà ñêğèïòà. Èñïîëüçóéòå: ".. COLOR_MAIN .."/nespit{FFFFFF}. Àâòîğ: "..COLOR_MAIN.."romanespit{FFFFFF}. Âåğñèÿ: "..scr.version, SCRIPT_COLOR)
-	updateCheck()
-	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-	myNick = sampGetPlayerNickname(myid)
+	sampAddChatMessage(SCRIPT_PREFIX .."Óñïåøíàÿ çàãğóçêà ñêğèïòà. Èñïîëüçóéòå: ".. COLOR_MAIN .."/nespit{FFFFFF}. Àâòîğ: "..COLOR_MAIN.."romanespit", SCRIPT_COLOR)
+	updateCheck()	
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
-	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)
-	
+	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)	
 	sampRegisterChatCommand('bcl', cleanStreamMemoryBuffer)
 	sampRegisterChatCommand("settgtoken", function(par)
 		if par:find(".+") then
@@ -510,7 +521,15 @@ function main()
 			sampAddChatMessage(SCRIPT_PREFIX .."Èñïîëüçóéòå: /settgtoken [token]", SCRIPT_COLOR)
 		end
 	end)
-	
+	sampRegisterChatCommand('rlavka',function() 
+		RadiusLavki = not RadiusLavki
+		imRLavka[0] = not imRLavka[0]
+		if RadiusLavki then
+			sampAddChatMessage(SCRIPT_PREFIX .."Ğàäèóñ ïåğåíîñíûõ ëàâîê ".. COLOR_YES .."âêëş÷åí", SCRIPT_COLOR)
+		else
+			sampAddChatMessage(SCRIPT_PREFIX .."Ğàäèóñ ïåğåíîñíûõ ëàâîê ".. COLOR_NO .."âûêëş÷åí", SCRIPT_COLOR)
+		end
+	end)
 	sampRegisterChatCommand("settgchat", function(par)
 		if par:find("([A-Za-z0-9%a%s]+)") then
 			local chat = par:match("([A-Za-z0-9%a%s]+)")
@@ -552,9 +571,6 @@ function main()
 		else
 			sampAddChatMessage(SCRIPT_PREFIX .."Èñïîëüçóéòå: /setphonevc [phone]", SCRIPT_COLOR)
 		end
-	end)
-	sampRegisterChatCommand("nespit_test", function()		
-		Logger(myNick)
 	end)
 	sampRegisterChatCommand("nespit_dialog", function(par)		
 		if par:find("([0-9%a%s]+)") then
@@ -599,6 +615,7 @@ function main()
 		QuestBots()
 		QuestBomj()
 		Kirka()
+		RadiusLavka()
 		kpztext = 'ÊÏÇ'
 		if settings.AdvokatHelper.adhTurnedOn then
 			UpdateTD(zeki)
@@ -646,21 +663,21 @@ function updateCheck()
 		downloadUrlToFile(url, dir, function(id, status, p1, p2)
 			if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 				lua_thread.create(function()
-				wait(1000)
-				if doesFileExist(getWorkingDirectory().."/config/rmnspt/info.upd") then
-					local f = io.open(getWorkingDirectory().."/config/rmnspt/info.upd", "r")
-					local upd = decodeJson(f:read("*a"))
-					f:close()
-					if type(upd) == "table" then
-					newversion = upd.version
-						if upd.version == scr.version then
-							sampAddChatMessage(SCRIPT_PREFIX .."Âû èñïîëüçóåòå àêòóàëüíóş âåğñèş ñêğèïòà - v"..scr.version, SCRIPT_COLOR)
-						else
-							sampAddChatMessage(SCRIPT_PREFIX .."Èìååòñÿ îáíîâëåíèå äî âåğñèè v"..newversion.."! Îòêğîé ìåíş ñêğèïòà è îáíîâè åãî!", SCRIPT_COLOR)
+					wait(1000)
+					if doesFileExist(getWorkingDirectory().."/config/rmnspt/info.upd") then
+						local f = io.open(getWorkingDirectory().."/config/rmnspt/info.upd", "r")
+						local upd = decodeJson(f:read("*a"))
+						f:close()
+						if type(upd) == "table" then
+							newversion = upd.version
+							newdate = upd.release_date
+							if upd.version == scr.version then
+								sampAddChatMessage(SCRIPT_PREFIX .."Âû èñïîëüçóåòå àêòóàëüíóş âåğñèş ñêğèïòà - v"..scr.version.."îò "..newdate, SCRIPT_COLOR)
+							else
+								sampAddChatMessage(SCRIPT_PREFIX .."Èìååòñÿ îáíîâëåíèå äî âåğñèè v"..newversion.." îò "..newdate.."! Îòêğîé ìåíş ñêğèïòà è îáíîâè åãî!", SCRIPT_COLOR)
+							end
 						end
 					end
-				end
-
 				end)
 			end
 		end)		
@@ -748,6 +765,37 @@ function Logger(text)
 		sampAddChatMessage(SCRIPT_PREFIX..text, SCRIPT_COLOR)
 		print("[".. os.date("%X") .."] "..text)
 	end
+end
+function RadiusLavka()
+	if RadiusLavki then
+		for IDTEXT = 0, 2048 do
+			if sampIs3dTextDefined(IDTEXT) then
+				local text, color, posX, posY, posZ, distance, ignoreWalls, player, vehicle = sampGet3dTextInfoById(IDTEXT)
+				if text == 'Óïğàâëåíèÿ òîâàğàìè.' and not isCentralMarket(posX, posY) then
+					drawCircleIn3d(posX,posY,posZ-1.3,5,36,1.5,0xFFFFFFFF)
+				end
+			end
+		end
+	end
+end
+function drawCircleIn3d(x, y, z, radius, polygons,width,color)
+    local step = math.floor(360 / (polygons or 36))
+    local sX_old, sY_old
+    for angle = 0, 360, step do
+        local lX = radius * math.cos(math.rad(angle)) + x
+        local lY = radius * math.sin(math.rad(angle)) + y
+        local lZ = z
+        local _, sX, sY, sZ, _, _ = convert3DCoordsToScreenEx(lX, lY, lZ)
+        if sZ > 1 then
+            if sX_old and sY_old then
+                renderDrawLine(sX, sY, sX_old, sY_old, width, color)
+            end
+            sX_old, sY_old = sX, sY
+        end
+    end
+end
+function isCentralMarket(x, y)
+	return (x > 1044 and x < 1197 and y > -1565 and y < -1403)
 end
 function Kirka()
 	if settings.main.kirka then
@@ -899,15 +947,21 @@ function hook.onSetObjectMaterialText(ev, data)
 		end
 	end
 end
+function GetNick(withServerNumber)
+	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+	myNick = sampGetPlayerNickname(myid)
+	if not withServerNumber then myNick:gsub("[..]","") end
+	return tostring(myNick)
+end
 function hook.onServerMessage(_,text)
 	if text:find("Âû èñïîëüçîâàëè ñóíäóê ñ ğóëåòêàìè") then caseTimers[1] = 3600 end
 	if text:find("Âû èñïîëüçîâàëè ïëàòèíîâûé ñóíäóê ñ ğóëåòêàìè") then caseTimers[2] = 7200 end
 	if text:find("Âû èñïîëüçîâàëè òàéíèê Èëîíà Ìàñêà") then caseTimers[3] = 7200 end
 	if text:find("èñïûòàë óäà÷ó") or text:find("Óäà÷à óëûáíóëàñü") or text:find("ñëîâèë ãğÿäêó") then
 		sendTelegram(false,text)		
-		print("{FF0000}âûáèâàíèå: {FFFFFF}"..text)
+		print("{FF0000}Âûáèâàíèå: {FFFFFF}"..text)
 	end
-	if text:find("êèêíóë èãğîêà "..myNick) then
+	if text:find("êèêíóë èãğîêà "..GetNick(true)) then
 		sendTelegram(true,text)
 	end
 	if IsZeksResponse(text) then
@@ -1083,7 +1137,7 @@ function hook.onShowDialog(id, style, title, button1, button2, text)
 		return false
 	end
 	if id == 131 then -- Ñàìîõèë
-		if text:find(myNick) then 
+		if text:find(GetNick(false)) then 
 			sampSendDialogResponse(id, 1, 0, nil)
 			sampCloseCurrentDialogWithButton(0)
 			return false

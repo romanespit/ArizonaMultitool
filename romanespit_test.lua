@@ -1,7 +1,7 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
 script_url("https://github.com/romanespit/ArizonaMultitool")
-script_version("1.35.1-hotfix")
+script_version("1.36")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -46,6 +46,11 @@ local settings = inicfg.load({
 		Default = -1,
 		Platinum = -1,
 		Elon = -1
+	},
+	disableVideo = {
+		isDisabled = false,
+		InCinema = false,
+		InHomeCinema = false,
 	},
 	clearMem = {
 		AutoCleaner = false
@@ -97,6 +102,10 @@ local imAdhAutoUpdate = new.bool(settings.AdvokatHelper.adhAutoUpdate)
 local imAdhSendOriginalMessage = new.bool(settings.AdvokatHelper.adhSendOriginalMessage)
 local imAdhTurnedOn = new.bool(settings.AdvokatHelper.adhTurnedOn)
 local imAdhUpdateTime = new.int(settings.AdvokatHelper.adhUpdateTime)
+
+local imDisabledVideo = new.bool(settings.disableVideo.isDisabled)
+local imDisabledVideoInCinema = new.bool(settings.disableVideo.InCinema)
+local imDisabledVideoInHomeCinema = new.bool(settings.disableVideo.InHomeCinema)
 
 local imClTimeLock = new.bool(settings.climate.TimeLock)
 local imClTimeValue = new.int(settings.climate.TimeValue)
@@ -163,8 +172,8 @@ end)
 imgui.OnFrame(function() return WinState[0] end,
     function(player)
         imgui.SetNextWindowPos(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(500, 420), imgui.Cond.Always)
-        imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version..' ('..newdate..')', WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
+        imgui.SetNextWindowSize(imgui.ImVec2(500, 600), imgui.Cond.Always)
+        imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version, WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
 		if imgui.CollapsingHeader(faicons('gear')..u8" Основные") then
 			imgui.Text(faicons('gear'))
 			if imgui.IsItemHovered() then
@@ -235,7 +244,37 @@ imgui.OnFrame(function() return WinState[0] end,
 					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления о кейсах ".. COLOR_NO .."выключены", SCRIPT_COLOR)
 				end
 			end
-			if imgui.Checkbox(u8'Авто /jmeat '..faicons('burger'), imAutoeat) then
+			if imgui.Checkbox(u8'Выключение видео на билбордах '..faicons('play'), imDisabledVideo) then
+				settings.disableVideo.isDisabled = not settings.disableVideo.isDisabled
+				inicfg.save(settings, 'rmnspt\\settings')
+				if settings.disableVideo.isDisabled then
+					sampAddChatMessage(SCRIPT_PREFIX .."Видеобилборды ".. COLOR_YES .."выключены", SCRIPT_COLOR)
+				else
+					sampAddChatMessage(SCRIPT_PREFIX .."Видеобилборды ".. COLOR_NO .."включены", SCRIPT_COLOR)
+				end
+				
+			end
+			if imDisabledVideo[0] then
+				if imgui.Checkbox(u8'Выключение в кинотеатре '..faicons('play'), imDisabledVideoInCinema) then
+					settings.disableVideo.InCinema = not settings.disableVideo.InCinema
+					inicfg.save(settings, 'rmnspt\\settings')
+					if settings.disableVideo.InCinema then
+						sampAddChatMessage(SCRIPT_PREFIX .."Видео в кинотеатре ".. COLOR_YES .."выключено", SCRIPT_COLOR)
+					else
+						sampAddChatMessage(SCRIPT_PREFIX .."Видео в кинотеатре ".. COLOR_NO .."включено", SCRIPT_COLOR)
+					end
+				end
+				if imgui.Checkbox(u8'Выключение в домашнем кинотеатре '..faicons('play'), imDisabledVideoInHomeCinema) then
+					settings.disableVideo.InHomeCinema = not settings.disableVideo.InHomeCinema
+					inicfg.save(settings, 'rmnspt\\settings')
+					if settings.disableVideo.InHomeCinema then
+						sampAddChatMessage(SCRIPT_PREFIX .."Видео в домашнем кинотеатре ".. COLOR_YES .."выключено", SCRIPT_COLOR)
+					else
+						sampAddChatMessage(SCRIPT_PREFIX .."Видео в домашнем кинотеатре ".. COLOR_NO .."включено", SCRIPT_COLOR)
+					end
+				end
+			end
+			if imgui.Checkbox(u8'Авто /jmeat (поедание оленины)'..faicons('burger'), imAutoeat) then
 				settings.main.autoeat = not settings.main.autoeat
 				inicfg.save(settings, 'rmnspt\\settings')
 				if settings.main.autoeat then
@@ -499,6 +538,34 @@ imgui.OnFrame(function() return WinState[0] end,
         imgui.End()
     end
 )
+function onReceivePacket(id, bs)
+	if (settings.disableVideo.isDisabled and getActiveInterior() == 0) or 
+	(settings.disableVideo.InCinema and getActiveInterior() == 201) or 
+	(settings.disableVideo.InHomeCinema and getActiveInterior() == 61) then 
+		if id == 220 then
+			raknetBitStreamIgnoreBits(bs, 8)
+			if raknetBitStreamReadInt8(bs) == 12 then
+				return false
+			end
+		end
+	end
+	--if settings.disableVideo.InCinema then
+	--	if id == 220 then
+	--		raknetBitStreamIgnoreBits(bs, 8)
+	--		if raknetBitStreamReadInt8(bs) == 12 then
+	--			return false
+	--		end
+	--	end
+	--end
+	--if settings.disableVideo.InHomeCinema then
+	--	if id == 220 then
+	--		raknetBitStreamIgnoreBits(bs, 8)
+	--		if raknetBitStreamReadInt8(bs) == 12 then
+	--			return false
+	--		end
+	--	end
+	--end
+end
 ------------
 function main()
 	while not isSampAvailable() do wait(0) end
@@ -796,6 +863,8 @@ function RadiusLavka()
 				local text, color, posX, posY, posZ, distance, ignoreWalls, player, vehicle = sampGet3dTextInfoById(IDTEXT)
 				if text == 'Управления товарами.' and not isCentralMarket(posX, posY) then
 					drawCircleIn3d(posX,posY,posZ-1.3,5,36,1.5,0xFFFFFFFF)
+				elseif text:find("Номер бизнеса") then
+					drawCircleIn3d(posX,posY,posZ-1.3,25,36,1.5,0xFF0000FF)
 				end
 			end
 		end
@@ -1049,7 +1118,6 @@ function sendTelegram(notification,msg)
 		
 	end
 end
-
 function asyncHttpRequest(method, url, args, resolve, reject)
    local request_thread = effil.thread(function (method, url, args)
 		 	local requests = require('requests')

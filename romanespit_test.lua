@@ -1,7 +1,7 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
 script_url("https://github.com/romanespit/ArizonaMultitool")
-script_version("1.36")
+script_version("1.37")
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -408,83 +408,6 @@ imgui.OnFrame(function() return WinState[0] end,
 			imgui.TextDisabled(u8(imWeatherName))	
 		end
 		imgui.Separator()
-		if imgui.CollapsingHeader(faicons('suitcase')..u8" Job Helper") then
-			if imgui.BeginTabBar('Tabs') then --   
-				if imgui.BeginTabItem(u8'Адвокат (не воркает)') then --  
-					if imgui.Checkbox(u8'Включить', imAdhTurnedOn) then
-						settings.AdvokatHelper.adhTurnedOn = not settings.AdvokatHelper.adhTurnedOn
-						inicfg.save(settings, 'rmnspt\\settings')
-						zeki = {}
-						if settings.AdvokatHelper.adhTurnedOn then
-							sampAddChatMessage(SCRIPT_PREFIX .."Advokat Helper ".. COLOR_YES .."включен", SCRIPT_COLOR)
-							if settings.AdvokatHelper.adhAutoUpdate then
-								local nowTime = os.time()
-								timer = nowTime + 5
-							else
-								timer = -1
-							end
-						else
-							sampAddChatMessage(SCRIPT_PREFIX .."Advokat Helper ".. COLOR_NO .."выключен", SCRIPT_COLOR)
-							if settings.AdvokatHelper.adhAutoUpdate then
-								local nowTime = os.time()
-								timer = nowTime + 5
-							else
-								timer = -1
-							end
-						end
-					end
-					--
-					if imAdhTurnedOn[0] then
-						if imgui.Checkbox(u8'Автообновление КПЗ', imAdhAutoUpdate) then
-							settings.AdvokatHelper.adhAutoUpdate = not settings.AdvokatHelper.adhAutoUpdate
-							if settings.AdvokatHelper.adhAutoUpdate then
-								sampAddChatMessage(SCRIPT_PREFIX .."Автообновление КПЗ ".. COLOR_YES .."включено", SCRIPT_COLOR)					
-								local nowTime = os.time()
-								timer = nowTime + 5
-							else
-								sampAddChatMessage(SCRIPT_PREFIX .."Автообновление КПЗ ".. COLOR_NO .."выключено", SCRIPT_COLOR)
-								timer = -1
-							end	
-							inicfg.save(settings, 'rmnspt\\settings')			
-						end
-						if imAdhAutoUpdate[0] then
-							if imgui.SliderInt(u8'Период автообновления (сек)', imAdhUpdateTime, 15, 120) then
-								settings.AdvokatHelper.adhUpdateTime = imAdhUpdateTime[0]
-								local nowTime = os.time()
-								timer = nowTime + settings.AdvokatHelper.adhUpdateTime
-								inicfg.save(settings, 'rmnspt\\settings')
-							end
-							imgui.SameLine()
-							imgui.Text(faicons('rotate'))
-							if imgui.IsItemHovered() then
-								imgui.BeginTooltip()
-								imgui.Text(u8'Нажмите, чтобы вернуть стандартное значение')
-								imgui.EndTooltip()
-							end
-							if imgui.IsItemClicked() then 
-								imAdhUpdateTime[0] = 30
-								local nowTime = os.time()
-								settings.AdvokatHelper.adhUpdateTime = imAdhUpdateTime[0]
-								timer = nowTime + settings.AdvokatHelper.adhUpdateTime
-								inicfg.save(settings, 'rmnspt\\settings')
-							end
-						end					
-						if imgui.Checkbox(u8'Получение ответов на /zeks', imAdhSendOriginalMessage) then
-							settings.AdvokatHelper.adhSendOriginalMessage = not settings.AdvokatHelper.adhSendOriginalMessage
-							inicfg.save(settings, 'rmnspt\\settings')
-							if settings.AdvokatHelper.adhSendOriginalMessage then
-								sampAddChatMessage(SCRIPT_PREFIX .."Получение ответов на /zeks ".. COLOR_YES .."включены", SCRIPT_COLOR)
-							else
-								sampAddChatMessage(SCRIPT_PREFIX .."Получение ответов на /zeks ".. COLOR_NO .."выключены", SCRIPT_COLOR)
-							end
-						end
-					end
-					imgui.EndTabItem()
-				end
-				imgui.EndTabBar()
-			end
-		end
-		imgui.Separator()
 		if imgui.CollapsingHeader(faicons('envelope')..u8" Настройки уведомлений Telegram") then
 			if imgui.Checkbox(u8'Уведомления в Telegram', imTelegramNotifications) then
 				settings.main.TelegramNotifications = not settings.main.TelegramNotifications
@@ -575,8 +498,8 @@ function main()
 	secTimer = lua_thread.create(function() return end)
 	userscreenX, userscreenY = getScreenResolution()
 	
-	sampRegisterChatCommand('nespit_test', function()		
-		sampAddChatMessage(SCRIPT_PREFIX .."Здесь была секретная команда, которую я использовал для различных", SCRIPT_COLOR)
+	sampRegisterChatCommand('nespit_test', function()
+		sampAddChatMessage(SCRIPT_PREFIX .."Здесь была секретная команда, которую я использовал для различных тестов", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .."Но перед релизом я её выпилил", SCRIPT_COLOR)
 	end)
 
@@ -858,16 +781,28 @@ function Logger(text)
 end
 function RadiusLavka()
 	if RadiusLavki then
+		local canPlaceMarket = true
+		local circleColor = 0xFFFFFFFF
+		local x, y, z = getCharCoordinates(PLAYER_PED)
 		for IDTEXT = 0, 2048 do
 			if sampIs3dTextDefined(IDTEXT) then
 				local text, color, posX, posY, posZ, distance, ignoreWalls, player, vehicle = sampGet3dTextInfoById(IDTEXT)
-				if text == 'Управления товарами.' and not isCentralMarket(posX, posY) then
-					drawCircleIn3d(posX,posY,posZ-1.3,5,36,1.5,0xFFFFFFFF)
-				elseif text:find("Номер бизнеса") then
-					drawCircleIn3d(posX,posY,posZ-1.3,25,36,1.5,0xFF0000FF)
+				if getDistanceBetweenCoords3d(x,y,z,posX,posY,posZ) < 35 then
+					if text == 'Управления товарами.' and not isCentralMarket(posX, posY) then
+						circleColor = 0xFFFFFFFF
+						if getDistanceBetweenCoords3d(x,y,z,posX,posY,posZ) < 5 then canPlaceMarket = false circleColor = 0xFFFF0000 end					
+						drawCircleIn3d(posX,posY,posZ-1.3,5,36,1.5,circleColor)
+					elseif text:find("Номер бизнеса") then
+						circleColor = 0xFF0000FF		
+						if getDistanceBetweenCoords3d(x,y,z,posX,posY,posZ) < 25 then canPlaceMarket = false circleColor = 0xFFFF0000 end
+						drawCircleIn3d(posX,posY,posZ-1.3,25,36,1.5,circleColor)
+					end
 				end
 			end
 		end
+		if isCentralMarket(x, y) then canPlaceMarket = false end
+		if canPlaceMarket then renderFontDrawText(font, "Можно поставить лавку", userscreenX/3 + 30, (userscreenY - 60), 0xFF228B22)
+		else renderFontDrawText(font, "Нельзя поставить лавку", userscreenX/3 + 30, (userscreenY - 60), 0xFFFF0000) end		
 	end
 end
 function drawCircleIn3d(x, y, z, radius, polygons,width,color)
@@ -1006,7 +941,7 @@ function hook.onSetInterior(id)
 end
 function hook.onSetObjectMaterialText(ev, data)
 	local Object = sampGetObjectHandleBySampId(ev)
-	if doesObjectExist(Object) and getObjectModel(Object) == 18663 and string.find(data.text, "(.-) {30A332}Свободная!") then
+	if doesObjectExist(Object) and getObjectModel(Object) == 14210 and string.find(data.text, "(.-) {30A332}Свободная!") then
 		if settings.main.lavka then
 			local result, posX, posY, posZ = getObjectCoordinates(Object)
 			if (isObjectInArea2d(Object, CR_AREA[1], CR_AREA[2], CR_AREA[3], CR_AREA[4], false) and not isViceCity()) then
@@ -1039,11 +974,10 @@ function hook.onSetObjectMaterialText(ev, data)
 		end
 	end
 end
-function GetNick(withServerNumber)
+function GetNick()
 	_, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	myNick = sampGetPlayerNickname(myid)
-	if not withServerNumber then myNick:gsub("[..]","") end
-	return tostring(myNick)
+	return tostring(myNick):gsub("%[.*%]","")
 end
 function hook.onServerMessage(_,text)
 	if text:find("Вы использовали сундук с рулетками") then caseTimers[1] = 3600 end

@@ -449,6 +449,10 @@ imgui.OnFrame(function() return WinState[0] end,
 					updateScript()
 				end
 			end
+			if imgui.Button(faicons('rotate')..u8' Перезагрузить скрипт') then
+				sampAddChatMessage(SCRIPT_PREFIX .."Перезагрузка скрипта...", SCRIPT_COLOR)
+				scr:reload()
+			end
 			imgui.TextColoredRGB("{F8A436}Что было добавлено в v"..newversion..' от '..newdate)
 			imgui.Spacing()
 			imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
@@ -502,7 +506,6 @@ function main()
 		sampAddChatMessage(SCRIPT_PREFIX .."Здесь была секретная команда, которую я использовал для различных тестов", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .."Но перед релизом я её выпилил", SCRIPT_COLOR)
 	end)
-
 	if settings.AdvokatHelper.adhAutoUpdate then
 		local nowTime = os.time()
 		timer = nowTime + 30

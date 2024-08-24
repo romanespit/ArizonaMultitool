@@ -449,6 +449,7 @@ imgui.OnFrame(function() return WinState[0] end,
 					updateScript()
 				end
 			end
+			imgui.SameLine()
 			if imgui.Button(faicons('rotate')..u8' Перезагрузить скрипт') then
 				sampAddChatMessage(SCRIPT_PREFIX .."Перезагрузка скрипта...", SCRIPT_COLOR)
 				scr:reload()

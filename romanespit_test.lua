@@ -1,7 +1,10 @@
 script_author("romanespit")
 script_name("{3B66C5}romanespit")
 script_url("https://github.com/romanespit/ArizonaMultitool")
-script_version("1.37")
+script_version("2.00")
+------------------------ J-CFG Minified
+local a,b=pcall(require,'json')local c=getWorkingDirectory and getWorkingDirectory()or''local d={encode=encodeJson or(a and b.encode or nil),decode=decodeJson or(a and b.decode or nil)}assert(d.encode and d.decode,'error, cannot use json encode/decode functions. Install JSON cfg: https://github.com/rxi/json.lua')local function e(f)local g=io.open(f,'r')if g~=nil then io.close(g)end;return g~=nil end;function Json(h,i)if not h:find('(.+)%.json$')then h=h..'.json'end;local j,k,l={},false,'UNKNOWN_ERROR'local function m(n,o)local function p(q)local r=type(q)if r~='string'then q=tostring(q)end;local s=q:find('^(%d+)')or q:find('(%p)')or q:find('\\')or q:find('%-')return s==nil and q or('[%s]'):format(r=='string'and"'"..q.."'"or q)end;local t={'{'}local o=o or 0;for q,u in pairs(n)do table.insert(t,('%s%s = %s,'):format(string.rep("    ",o+1),p(q),type(u)=="table"and m(u,o+1)or(type(u)=='string'and"'"..u.."'"or tostring(u))))end;table.insert(t,string.rep('    ',o)..'}')return table.concat(t,'\n')end;local function v(i,w)local x=0;for y,z in pairs(i)do if w[y]==nil then if type(z)=='table'then w[y]={}_,subFilledCount=v(z,w[y])x=x+subFilledCount else w[y]=z;x=x+1 end elseif type(z)=='table'and type(w[y])=='table'then _,subFilledCount=v(z,w[y])x=x+subFilledCount end end;return w,x end;local function A(B)local C=io.open(h,'w')if C then local D,E=pcall(d.encode,B)if D and E then C:write(E)end;C:close()end end;local function F()local C=io.open(h,'r')if C then local G=C:read('*a')C:close()local H,I=pcall(d.decode,G)if H and I then j=I;k=true;local J,x=v(i,j)if x>0 then A(J)return J end;return I else l='JSON_DECODE_FAILED_'..I end else l='JSON_FILE_OPEN_FAILED'end;return{}end;if not e(h)then A(i)end;j=F()return k,setmetatable({},{__call=function(self,K)if type(K)=='table'then j=K;A(j)end end,__index=function(self,y)return y and j[y]or j end,__newindex=function(self,y,L)j[y]=L;A(j)end,__tostring=function(self)return m(j)end,__pairs=function()local y,z=next(j)return function()y,z=next(j,y)return y,z end end,__concat=function()return d.encode(j)end}),k and'ok'or l end
+
 ------------------------
 local scr = thisScript()
 local hook = require 'lib.samp.events'
@@ -11,51 +14,42 @@ local imgui = require 'mimgui'
 local ffi = require 'ffi'
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
+local dirml = getWorkingDirectory() -- Директория moonloader
 local effil_check, effil = pcall(require, 'effil')
 local inicfg = require 'inicfg'
 local faicons = require('fAwesome6')
-local settings = inicfg.load({
-    main = {
-        TelegramToken = "",
-		TelegramChat = "",
-		PhNumber = "",
-		PhNumberVice = "",
-		TelegramNotifications = false,
-		logging = 0,
-		qb = false,
-		kirka = false,
-		bomj = false,
-		lavka = false,
-		autoeat = false,
-		bankPin = ""
-    },
-	AdvokatHelper = {
-		adhSendOriginalMessage = true,
-		adhAutoUpdate = false,
-		adhTurnedOn = false,
-		adhUpdateTime = 30
-	},
-	climate = {
-		TimeValue = 12,
-		TimeLock = false,
-		WeatherValue = 1,
-		WeatherLock = false
-	},
-	cases = {
-		isTurned = true,
-		Default = -1,
-		Platinum = -1,
-		Elon = -1
-	},
-	disableVideo = {
-		isDisabled = false,
-		InCinema = false,
-		InHomeCinema = false,
-	},
-	clearMem = {
-		AutoCleaner = false
-	}
-}, 'rmnspt\\settings')
+if not doesDirectoryExist(dirml.."/rmnsptScripts/") then
+    createDirectory(dirml.."/rmnsptScripts/")
+    print("Директория rmnsptScripts не была найдена. Успешное создание")
+end
+local cfgstatus, settings = Json(dirml..'\\rmnsptScripts\\Multitool-settings.json', { 
+	TelegramToken = "",
+	TelegramChat = "",
+	PhNumber = "",
+	PhNumberVice = "",
+	TelegramNotifications = false,
+	logging = 0,
+	qb = false,
+	kirka = false,
+	bomj = false,
+	lavka = false,
+	VCab = false,
+	HotelBoxes = false,
+	autoeat = false,
+	bankPin = "12",
+	TimeValue = 12,
+	TimeLock = false,
+	WeatherValue = 1,
+	WeatherLock = false,
+	isTurned = false,
+	Default = -1,
+	Platinum = -1,
+	Elon = -1,
+	isDisabled = false,
+	InCinema = false,
+	InHomeCinema = false,
+	AutoCleaner = false
+});
 ------------------------
 
 CR_AREA = {
@@ -79,7 +73,7 @@ zeki = {}
 myid = -1
 newversion = ""
 newdate = ""
-caseTimers = {settings.cases.Default,settings.cases.Platinum,settings.cases.Elon}
+caseTimers = {settings.Default,settings.Platinum,settings.Elon}
 caseName = {"рулетки","платиновой рулетки","Илона Маска"}
 -- time/weather
 local memory = require "memory"
@@ -90,27 +84,25 @@ local actual = {
 --- mimgui
 local new, str = imgui.new, ffi.string
 local WinState = new.bool()
-local imQuestBots = new.bool(settings.main.qb)
-local imQuestBomj = new.bool(settings.main.bomj)
-local imLavka = new.bool(settings.main.lavka)
+local imQuestBots = new.bool(settings.qb)
+local imQuestBomj = new.bool(settings.bomj)
+local imLavka = new.bool(settings.lavka)
+local imVCab = new.bool(settings.VCab)
+local imHotelBoxes = new.bool(settings.HotelBoxes)
 local imRLavka = new.bool(RadiusLavki)
-local imKirka = new.bool(settings.main.kirka)
-local imAutoClean = new.bool(settings.clearMem.AutoCleaner)
-local imAutoeat = new.bool(settings.main.autoeat)
-local imCaseAlert = new.bool(settings.cases.isTurned)
-local imAdhAutoUpdate = new.bool(settings.AdvokatHelper.adhAutoUpdate)
-local imAdhSendOriginalMessage = new.bool(settings.AdvokatHelper.adhSendOriginalMessage)
-local imAdhTurnedOn = new.bool(settings.AdvokatHelper.adhTurnedOn)
-local imAdhUpdateTime = new.int(settings.AdvokatHelper.adhUpdateTime)
+local imKirka = new.bool(settings.kirka)
+local imAutoClean = new.bool(settings.AutoCleaner)
+local imAutoeat = new.bool(settings.autoeat)
+local imCaseAlert = new.bool(settings.isTurned)
 
-local imDisabledVideo = new.bool(settings.disableVideo.isDisabled)
-local imDisabledVideoInCinema = new.bool(settings.disableVideo.InCinema)
-local imDisabledVideoInHomeCinema = new.bool(settings.disableVideo.InHomeCinema)
+local imDisabledVideo = new.bool(settings.isDisabled)
+local imDisabledVideoInCinema = new.bool(settings.InCinema)
+local imDisabledVideoInHomeCinema = new.bool(settings.InHomeCinema)
 
-local imClTimeLock = new.bool(settings.climate.TimeLock)
-local imClTimeValue = new.int(settings.climate.TimeValue)
-local imClWeatherLock = new.bool(settings.climate.WeatherLock)
-local imClWeatherValue = new.int(settings.climate.WeatherValue)
+local imClTimeLock = new.bool(settings.TimeLock)
+local imClTimeValue = new.int(settings.TimeValue)
+local imClWeatherLock = new.bool(settings.WeatherLock)
+local imClWeatherValue = new.int(settings.WeatherValue)
 local imWeatherNameList = {
 	u8'EXTRASUNNY_LA',
 	u8'SUNNY_LA',
@@ -137,22 +129,22 @@ local imWeatherNameList = {
 }
 local imWeatherName = imWeatherNameList[1]
 
-local imLoggingCombo = new.int(settings.main.logging)
+local imLoggingCombo = new.int(settings.logging)
 local imLoggingList = {u8'Выключено', u8'В консоль SAMPFUNCS', u8'В игровой чат', u8'И в консоль, и в чат'}
 local imLoggingItems = imgui.new['const char*'][#imLoggingList](imLoggingList)
-local imPhNumber = new.char[256](u8(settings.main.PhNumber))
-local imPhNumberVice = new.char[256](u8(settings.main.PhNumberVice))
-local imTelegramChat = new.char[256](u8(settings.main.TelegramChat))
-local imTelegramToken = new.char[256](u8(settings.main.TelegramToken))
-local imBankPin = new.char[256](u8(settings.main.bankPin))
-local imTelegramNotifications = new.bool(settings.main.TelegramNotifications)
+local imPhNumber = new.char[256](u8(settings.PhNumber))
+local imPhNumberVice = new.char[256](u8(settings.PhNumberVice))
+local imTelegramChat = new.char[256](u8(settings.TelegramChat))
+local imTelegramToken = new.char[256](u8(settings.TelegramToken))
+local imBankPin = new.char[256](u8(settings.bankPin))
+local imTelegramNotifications = new.bool(settings.TelegramNotifications)
 
 function onScriptTerminate(scr, is_quit)
 	if scr == thisScript() then
-		settings.cases.Default = caseTimers[1]
-		settings.cases.Platinum = caseTimers[2]
-		settings.cases.Elon = caseTimers[3]
-		inicfg.save(settings, 'rmnspt\\settings')
+		settings.Default = caseTimers[1]
+		settings.Platinum = caseTimers[2]
+		settings.Elon = caseTimers[3]		
+		settings();
 		for handle, _ in pairs(MARKERS) do
 			removeUser3dMarker(handle)
 			MARKERS[handle] = nil
@@ -168,6 +160,7 @@ imgui.OnInitialize(function()
     config.PixelSnapH = true
     iconRanges = imgui.new.ImWchar[3](faicons.min_range, faicons.max_range, 0)
     imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(faicons.get_font_data_base85('solid'), 14, config, iconRanges)
+	MimStyle()
 end)
 imgui.OnFrame(function() return WinState[0] end,
     function(player)
@@ -175,149 +168,68 @@ imgui.OnFrame(function() return WinState[0] end,
         imgui.SetNextWindowSize(imgui.ImVec2(500, 600), imgui.Cond.Always)
         imgui.Begin(faicons('poo')..u8' romanespit Arizona Multitool v'..scr.version, WinState, imgui.WindowFlags.AlwaysAutoResize+imgui.WindowFlags.NoCollapse)
 		if imgui.CollapsingHeader(faicons('gear')..u8" Основные") then
-			imgui.Text(faicons('gear'))
-			if imgui.IsItemHovered() then
-				imgui.BeginTooltip()
-				imgui.Text(u8'Нажмите, чтобы скопировать команду в чат')
-				imgui.EndTooltip()
-			end 
-			if imgui.IsItemClicked() then sampSetChatInputEnabled(true) sampSetChatInputText('/setpin ') end
-			imgui.SameLine()
-			imgui.Text(u8"PIN: ")
-			imgui.SameLine()
-			imgui.TextDisabled(u8(settings.main.bankPin))
-			
-			imgui.Text(faicons('gear'))
-			if imgui.IsItemHovered() then
-				imgui.BeginTooltip()
-				imgui.Text(u8'Нажмите, чтобы скопировать команду в чат')
-				imgui.EndTooltip()
-			end 
-			if imgui.IsItemClicked() then sampSetChatInputEnabled(true) sampSetChatInputText('/setphone ') end
-			imgui.SameLine()
-			imgui.Text(u8"Номер телефона SA: ")
-			imgui.SameLine()
-			imgui.TextDisabled(u8(settings.main.PhNumber))	
-			imgui.SameLine()
-			imgui.Text(faicons('question'))
-			if imgui.IsItemHovered() then
-				imgui.BeginTooltip()
-				imgui.Text(u8'Вы можете писать в чат (alo) или (алло) - текст будет заменен на указанный номер')
-				imgui.Text(u8'Также вы можете написать (id) или (ид) - будет подставлен ваш ID')
-				imgui.EndTooltip()
-			end 
-			if imgui.IsItemClicked() then
-				sampAddChatMessage(SCRIPT_PREFIX .."Вы можете писать в чат "..COLOR_YES.."(alo)"..COLOR_WHITE.." или "..COLOR_YES.."(алло)"..COLOR_WHITE.." - текст будет заменен на указанный номер", SCRIPT_COLOR)
-				sampAddChatMessage(SCRIPT_PREFIX .."Также вы можете написать "..COLOR_YES.."(id)"..COLOR_WHITE.." или "..COLOR_YES.."(ид)"..COLOR_WHITE.." - будет подставлен ваш ID", SCRIPT_COLOR)
+			if imgui.InputTextWithHint(u8'PIN', u8'Введите PIN от банка', imBankPin, 256) then
+				settings.bankPin = u8:decode(ffi.string(imBankPin))
+				settings();
 			end
 
-			imgui.Text(faicons('gear'))
-			if imgui.IsItemHovered() then
-				imgui.BeginTooltip()
-				imgui.Text(u8'Нажмите, чтобы скопировать команду в чат')
-				imgui.EndTooltip()
-			end 
-			if imgui.IsItemClicked() then sampSetChatInputEnabled(true) sampSetChatInputText('/setphonevc ') end
-			imgui.SameLine()
-			imgui.Text(u8"Номер телефона VC: ")
-			imgui.SameLine()
-			imgui.TextDisabled(u8(settings.main.PhNumberVice))	
-			imgui.SameLine()
-			imgui.Text(faicons('question'))
-			if imgui.IsItemHovered() then
-				imgui.BeginTooltip()
-				imgui.Text(u8'Вы можете писать в чат (alo) или (алло) - текст будет заменен на указанный номер')
-				imgui.Text(u8'Также вы можете написать (id) или (ид) - будет подставлен ваш ID')
-				imgui.EndTooltip()
-			end 
-			if imgui.IsItemClicked() then
-				sampAddChatMessage(SCRIPT_PREFIX .."Вы можете писать в чат "..COLOR_YES.."(alo)"..COLOR_WHITE.." или "..COLOR_YES.."(алло)"..COLOR_WHITE.." - текст будет заменен на указанный номер", SCRIPT_COLOR)
-				sampAddChatMessage(SCRIPT_PREFIX .."Также вы можете написать "..COLOR_YES.."(id)"..COLOR_WHITE.." или "..COLOR_YES.."(ид)"..COLOR_WHITE.." - будет подставлен ваш ID", SCRIPT_COLOR)
+			if imgui.InputTextWithHint(u8'Номер телефона SA', u8'Введите телефон на основном сервере', imPhNumber, 256) then
+				settings.PhNumber = u8:decode(ffi.string(imPhNumber))
+				settings();
+			end
+
+			if imgui.InputTextWithHint(u8'Номер телефона VC', u8'Введите телефон на VC сервере', imPhNumberVice, 256) then
+				settings.imPhNumberVice = u8:decode(ffi.string(imPhNumberVice))
+				settings();
 			end
 				--
 			if imgui.Checkbox(u8'Уведомления о кейсах '..faicons('gem'), imCaseAlert) then
-				settings.cases.isTurned = not settings.cases.isTurned
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.cases.isTurned then
-					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления о кейсах ".. COLOR_YES .."включены", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления о кейсах ".. COLOR_NO .."выключены", SCRIPT_COLOR)
-				end
+				settings.isTurned = imCaseAlert[0]
+				settings();
+				Logger("Уведомления о кейсах "..(imCaseAlert[0] and COLOR_YES.."включены" or COLOR_NO.."выключены"))
 			end
 			if imgui.Checkbox(u8'Выключение видео на билбордах '..faicons('play'), imDisabledVideo) then
-				settings.disableVideo.isDisabled = not settings.disableVideo.isDisabled
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.disableVideo.isDisabled then
-					sampAddChatMessage(SCRIPT_PREFIX .."Видеобилборды ".. COLOR_YES .."выключены", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Видеобилборды ".. COLOR_NO .."включены", SCRIPT_COLOR)
-				end
+				settings.isDisabled = imDisabledVideo[0]
+				settings();
+				Logger("Видеобилборды "..(imDisabledVideo[0] and COLOR_YES.."выключены" or COLOR_NO.."включены"))
 				
 			end
 			if imDisabledVideo[0] then
 				if imgui.Checkbox(u8'Выключение в кинотеатре '..faicons('play'), imDisabledVideoInCinema) then
-					settings.disableVideo.InCinema = not settings.disableVideo.InCinema
-					inicfg.save(settings, 'rmnspt\\settings')
-					if settings.disableVideo.InCinema then
-						sampAddChatMessage(SCRIPT_PREFIX .."Видео в кинотеатре ".. COLOR_YES .."выключено", SCRIPT_COLOR)
-					else
-						sampAddChatMessage(SCRIPT_PREFIX .."Видео в кинотеатре ".. COLOR_NO .."включено", SCRIPT_COLOR)
-					end
+					settings.InCinema = imDisabledVideoInCinema[0]
+					settings();
+					Logger("Видео в кинотеатре "..(imDisabledVideoInCinema[0] and COLOR_YES.."выключено" or COLOR_NO.."включено"))
 				end
 				if imgui.Checkbox(u8'Выключение в домашнем кинотеатре '..faicons('play'), imDisabledVideoInHomeCinema) then
-					settings.disableVideo.InHomeCinema = not settings.disableVideo.InHomeCinema
-					inicfg.save(settings, 'rmnspt\\settings')
-					if settings.disableVideo.InHomeCinema then
-						sampAddChatMessage(SCRIPT_PREFIX .."Видео в домашнем кинотеатре ".. COLOR_YES .."выключено", SCRIPT_COLOR)
-					else
-						sampAddChatMessage(SCRIPT_PREFIX .."Видео в домашнем кинотеатре ".. COLOR_NO .."включено", SCRIPT_COLOR)
-					end
+					settings.InHomeCinema = imDisabledVideoInHomeCinema[0]
+					settings();
+					Logger("Видео в домашнем кинотеатре "..(imDisabledVideoInHomeCinema[0] and COLOR_YES.."выключено" or COLOR_NO.."включено"))
 				end
 			end
 			if imgui.Checkbox(u8'Авто /jmeat (поедание оленины)'..faicons('burger'), imAutoeat) then
-				settings.main.autoeat = not settings.main.autoeat
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.autoeat then
-					sampAddChatMessage(SCRIPT_PREFIX .."Авто /jmeat ".. COLOR_YES .."включен", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Авто /jmeat ".. COLOR_NO .."выключен", SCRIPT_COLOR)
-				end
+				settings.autoeat = imAutoeat[0]
+				settings();
+				Logger("Авто /jmeat "..(imAutoeat[0] and COLOR_YES.."включен" or COLOR_NO.."выключен"))
 			end
 			if imgui.Checkbox(u8'Квестовые боты '..faicons('robot'), imQuestBots) then
-				settings.main.qb = not settings.main.qb
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.qb then
-					sampAddChatMessage(SCRIPT_PREFIX .."Квестовые боты ".. COLOR_YES .."показываются", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Квестовые боты ".. COLOR_NO .."не показываются", SCRIPT_COLOR)
-				end
+				settings.qb = imQuestBots[0]
+				settings();
+				Logger("Квестовые боты "..(imQuestBots[0] and COLOR_YES.."показываются" or COLOR_NO.."не показываются"))
 			end
 			if imgui.Checkbox(u8'Квестовые бомжи '..faicons('robot'), imQuestBomj) then
-				settings.main.bomj = not settings.main.bomj
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.bomj then
-					sampAddChatMessage(SCRIPT_PREFIX .."Квестовые бомжи ".. COLOR_YES .."показываются", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Квестовые бомжи ".. COLOR_NO .."не показываются", SCRIPT_COLOR)
-				end
+				settings.bomj = imQuestBomj[0]
+				settings();
+				Logger("Квестовые бомжи "..(imQuestBomj[0] and COLOR_YES.."показываются" or COLOR_NO.."не показываются"))
 			end
 			if imgui.Checkbox(u8'Рендер руды '..faicons('gem'), imKirka) then
-				settings.main.kirka = not settings.main.kirka
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.kirka then
-					sampAddChatMessage(SCRIPT_PREFIX .."Рендер руды ".. COLOR_YES .."включен", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Рендер руды ".. COLOR_NO .."выключен", SCRIPT_COLOR)
-				end
+				settings.kirka = imKirka[0]
+				settings();
+				Logger("Рендер руды "..(imKirka[0] and COLOR_YES.."включен" or COLOR_NO.."выключен"))
 			end
 			if imgui.Checkbox(u8'Автоочистка памяти '..faicons('trash'), imAutoClean) then
-				settings.clearMem.AutoCleaner = not settings.clearMem.AutoCleaner
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.clearMem.AutoCleaner then
-					sampAddChatMessage(SCRIPT_PREFIX .."Автоочистка памяти by Azller Lollison ".. COLOR_YES .."включена", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Автоочистка памяти by Azller Lollison ".. COLOR_NO .."выключена", SCRIPT_COLOR)
-				end
+				settings.AutoCleaner = imAutoClean[0]
+				settings();
+				Logger("Автоочистка памяти by Azller Lollison "..(imAutoClean[0] and COLOR_YES.."включена" or COLOR_NO.."выключена"))
 			end
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
@@ -325,32 +237,34 @@ imgui.OnFrame(function() return WinState[0] end,
 				imgui.EndTooltip()
 			end
 			if imgui.Checkbox(u8'Уведомления о свободных лавках '..faicons('store'), imLavka) then
-				settings.main.lavka = not settings.main.lavka
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.lavka then
-					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления о лавках ".. COLOR_YES .."включены", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления о лавках ".. COLOR_NO .."выключены", SCRIPT_COLOR)
-				end
+				settings.lavka = imLavka[0]
+				settings();
+				Logger("Уведомления о лавках "..(settings.lavka and COLOR_YES.."включены" or COLOR_NO.."выключены"))
+			end
+			if imgui.Checkbox(u8'Уведомления о свободных местах на АБ ViceCity '..faicons('store'), imVCab) then
+				settings.VCab = imVCab[0]
+				settings();				
+				Logger("Уведомления о свободных местах на АБ ViceCity "..(imVCab[0] and COLOR_YES.."включены" or COLOR_NO.."выключены"))
 			end
 			if imgui.Checkbox(u8'Радиус переносных лавок '..faicons('store'), imRLavka) then
-				RadiusLavki = not RadiusLavki
-				if RadiusLavki then
-					sampAddChatMessage(SCRIPT_PREFIX .."Радиус переносных лавок ".. COLOR_YES .."включен", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Радиус переносных лавок ".. COLOR_NO .."выключен", SCRIPT_COLOR)
-				end
+				RadiusLavki = not RadiusLavki			
+				Logger("Радиус переносных лавок "..(RadiusLavki == true and COLOR_YES.."включен" or COLOR_NO.."выключен"))
+			end
+			if imgui.Checkbox(u8'Уведомления о ларцах в отеле '..faicons('store'), imHotelBoxes) then
+				settings.HotelBoxes = imHotelBoxes[0]
+				settings();
+				Logger("Уведомления о ларцах в отеле "..(imHotelBoxes[0] and COLOR_YES.."включены" or COLOR_NO.."выключены"))
 			end
 			if imgui.Combo(u8'Логирование '..faicons('pen'),imLoggingCombo,imLoggingItems, #imLoggingList) then
-				settings.main.logging = imLoggingCombo[0]
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.logging == 1 then
+				settings.logging = imLoggingCombo[0]
+				settings();
+				if settings.logging == 1 then
 					sampAddChatMessage(SCRIPT_PREFIX .."Логирование скрипта ".. COLOR_YES .."включено в консоль", SCRIPT_COLOR)
-				elseif settings.main.logging == 2 then
+				elseif settings.logging == 2 then
 					sampAddChatMessage(SCRIPT_PREFIX .."Логирование скрипта ".. COLOR_YES .."включено в чат", SCRIPT_COLOR)
-				elseif settings.main.logging == 3 then
+				elseif settings.logging == 3 then
 					sampAddChatMessage(SCRIPT_PREFIX .."Логирование скрипта ".. COLOR_YES .."и в консоль, и в чат", SCRIPT_COLOR)
-				elseif settings.main.logging == 0 then
+				elseif settings.logging == 0 then
 					sampAddChatMessage(SCRIPT_PREFIX .."Логирование скрипта ".. COLOR_NO .."выключено", SCRIPT_COLOR)
 				end
 			end
@@ -358,13 +272,9 @@ imgui.OnFrame(function() return WinState[0] end,
 		imgui.Separator()
 		if imgui.CollapsingHeader(faicons('clock')..faicons('cloud')..u8" Управление временем/погодой") then
 			if imgui.Checkbox(u8'Блокировать изменение времени', imClTimeLock) then
-				settings.climate.TimeLock = not settings.climate.TimeLock
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.climate.TimeLock then
-					sampAddChatMessage(SCRIPT_PREFIX .."Изменение времени сервером ".. COLOR_NO .."заблокировано", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Изменение времени сервером ".. COLOR_YES .."разблокировано", SCRIPT_COLOR)
-				end
+				settings.TimeLock = imClTimeLock[0]
+				settings();
+				Logger("Изменение времени сервером "..(imClTimeLock[0] and COLOR_NO.."заблокировано" or COLOR_YES.."разблокировано"))
 			end
 			if imgui.SliderInt(u8'Установить время', imClTimeValue, 0, 23) then
 				setWorldTime(imClTimeValue[0])
@@ -382,13 +292,9 @@ imgui.OnFrame(function() return WinState[0] end,
 				sampAddChatMessage(SCRIPT_PREFIX .."Время изменено на серверное: ".. COLOR_YES ..tostring(actual.time), SCRIPT_COLOR)
 			end
 			if imgui.Checkbox(u8'Блокировать изменение погоды', imClWeatherLock) then
-				settings.climate.WeatherLock = not settings.climate.WeatherLock
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.climate.WeatherLock then
-					sampAddChatMessage(SCRIPT_PREFIX .."Изменение погоды сервером ".. COLOR_NO .."заблокировано", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Изменение погоды сервером ".. COLOR_YES .."разблокировано", SCRIPT_COLOR)
-				end
+				settings.WeatherLock = imClWeatherLock[0]
+				settings();
+				Logger("Изменение погоды сервером "..(imClWeatherLock[0] and COLOR_NO.."заблокировано" or COLOR_YES.."разблокировано"))
 			end
 			if imgui.SliderInt(u8'Установить погоду', imClWeatherValue, 0, 45) then				
 				setWorldWeather(imClWeatherValue[0])
@@ -410,37 +316,19 @@ imgui.OnFrame(function() return WinState[0] end,
 		imgui.Separator()
 		if imgui.CollapsingHeader(faicons('envelope')..u8" Настройки уведомлений Telegram") then
 			if imgui.Checkbox(u8'Уведомления в Telegram', imTelegramNotifications) then
-				settings.main.TelegramNotifications = not settings.main.TelegramNotifications
-				inicfg.save(settings, 'rmnspt\\settings')
-				if settings.main.TelegramNotifications then
-					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления в Telegram ".. COLOR_YES .."включены", SCRIPT_COLOR)
-				else
-					sampAddChatMessage(SCRIPT_PREFIX .."Уведомления в Telegram ".. COLOR_NO .."выключены", SCRIPT_COLOR)
-				end
+				settings.TelegramNotifications = imTelegramNotifications[0]
+				settings(); 
+				Logger("Уведомления в Telegram "..(settings.TelegramNotifications == true and COLOR_YES.."включены" or COLOR_NO.."выключены"))
 			end
 			if imTelegramNotifications[0] then
-				imgui.Text(faicons('gear'))
-				if imgui.IsItemHovered() then
-					imgui.BeginTooltip()
-					imgui.Text(u8'Нажмите, чтобы скопировать команду в чат')
-					imgui.EndTooltip()
-				end 
-				if imgui.IsItemClicked() then sampSetChatInputEnabled(true) sampSetChatInputText('/settgtoken') end
-				imgui.SameLine()
-				imgui.Text(u8"Токен бота: ")
-				imgui.SameLine()
-				imgui.TextDisabled(u8(settings.main.TelegramToken))			
-				imgui.Text(faicons('gear')) 
-				if imgui.IsItemHovered() then
-					imgui.BeginTooltip()
-					imgui.Text(u8'Нажмите, чтобы скопировать команду в чат')
-					imgui.EndTooltip()
-				end 
-				if imgui.IsItemClicked() then sampSetChatInputEnabled(true) sampSetChatInputText('/settgchat') end			
-				imgui.SameLine()
-				imgui.Text(u8"ID чата в Telegram: ")
-				imgui.SameLine()
-				imgui.TextDisabled(u8(settings.main.TelegramChat))
+				if imgui.InputTextWithHint(u8'Токен бота', u8'Введите токен вашего бота', imTelegramToken, 256) then
+					settings.TelegramToken = u8:decode(ffi.string(imTelegramToken))
+					settings();
+				end
+				if imgui.InputTextWithHint(u8'ID чата в Telegram', u8'Введите ваш TG User ID', imTelegramChat, 256) then
+					settings.TelegramChat = u8:decode(ffi.string(imTelegramChat))
+					settings();
+				end
 			end
 		end	
 		imgui.Separator()
@@ -452,24 +340,26 @@ imgui.OnFrame(function() return WinState[0] end,
 			imgui.SameLine()
 			if imgui.Button(faicons('rotate')..u8' Перезагрузить скрипт') then
 				sampAddChatMessage(SCRIPT_PREFIX .."Перезагрузка скрипта...", SCRIPT_COLOR)
+				showCursor(false)
 				scr:reload()
 			end
-			imgui.TextColoredRGB("{F8A436}Что было добавлено в v"..newversion..' от '..newdate)
-			imgui.Spacing()
-			imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
-				if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then
-					for line in io.lines(getWorkingDirectory().."/config/rmnspt/update.txt") do
-						imgui.TextColoredRGB(line:gsub("*n*", "\n"))
-					end
-				end
-			imgui.EndChild()
+			if doesFileExist(getWorkingDirectory().."/rmnsptScripts/Multitool-update.txt") then
+				imgui.TextColoredRGB("{F8A436}Что было добавлено в v"..newversion..' от '..newdate)
+				imgui.Spacing()
+				imgui.BeginChild("Update Log", imgui.ImVec2(0, 0), true)
+					
+						for line in io.lines(getWorkingDirectory().."/rmnsptScripts/Multitool-update.txt") do
+							imgui.TextColoredRGB(line:gsub("*n*", "\n"))
+						end
+				imgui.EndChild()
+			end
         imgui.End()
     end
 )
 function onReceivePacket(id, bs)
-	if (settings.disableVideo.isDisabled and getActiveInterior() == 0) or 
-	(settings.disableVideo.InCinema and getActiveInterior() == 201) or 
-	(settings.disableVideo.InHomeCinema and getActiveInterior() == 61) then 
+	if (settings.isDisabled and getActiveInterior() == 0) or 
+	(settings.InCinema and getActiveInterior() == 201) or 
+	(settings.InHomeCinema and getActiveInterior() == 61) then 
 		if id == 220 then
 			raknetBitStreamIgnoreBits(bs, 8)
 			if raknetBitStreamReadInt8(bs) == 12 then
@@ -477,7 +367,7 @@ function onReceivePacket(id, bs)
 			end
 		end
 	end
-	--if settings.disableVideo.InCinema then
+	--if settings.InCinema then
 	--	if id == 220 then
 	--		raknetBitStreamIgnoreBits(bs, 8)
 	--		if raknetBitStreamReadInt8(bs) == 12 then
@@ -485,7 +375,7 @@ function onReceivePacket(id, bs)
 	--		end
 	--	end
 	--end
-	--if settings.disableVideo.InHomeCinema then
+	--if settings.InHomeCinema then
 	--	if id == 220 then
 	--		raknetBitStreamIgnoreBits(bs, 8)
 	--		if raknetBitStreamReadInt8(bs) == 12 then
@@ -498,7 +388,7 @@ end
 function main()
 	while not isSampAvailable() do wait(0) end
 	if not doesDirectoryExist(getWorkingDirectory()..'/config/rmnspt') then createDirectory('moonloader\\config\\rmnspt') end
-    if not doesFileExist('moonloader/config/rmnspt/settings.ini') then inicfg.save(settings, 'rmnspt\\settings') end
+    if not doesFileExist('moonloader/config/rmnspt/settings.ini') then settings(); end
 	thread = lua_thread.create(function() return end)
 	secTimer = lua_thread.create(function() return end)
 	userscreenX, userscreenY = getScreenResolution()
@@ -507,10 +397,6 @@ function main()
 		sampAddChatMessage(SCRIPT_PREFIX .."Здесь была секретная команда, которую я использовал для различных тестов", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .."Но перед релизом я её выпилил", SCRIPT_COLOR)
 	end)
-	if settings.AdvokatHelper.adhAutoUpdate then
-		local nowTime = os.time()
-		timer = nowTime + 30
-	end
 	repeat wait(100) until sampIsLocalPlayerSpawned()
 	sampAddChatMessage(SCRIPT_PREFIX .."Успешная загрузка скрипта. Используйте: ".. COLOR_MAIN .."/nespit{FFFFFF}. Автор: "..COLOR_MAIN.."romanespit", SCRIPT_COLOR)
 	updateCheck()
@@ -524,6 +410,7 @@ function main()
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setpin{FFFFFF} - указать новый PIN для автоввода в банке/приложении", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setphone{FFFFFF} - указать новый телефон SA для авто замены (алло) и (alo)", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setphonevc{FFFFFF} - указать новый телефон VC для авто замены (алло) и (alo)", SCRIPT_COLOR)
+		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/tg{FFFFFF} - отправить сообщение себе в тг", SCRIPT_COLOR)
 	end)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
 	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)	
@@ -531,27 +418,32 @@ function main()
 	sampRegisterChatCommand("settgtoken", function(par)
 		if par:find(".+") then
 			local token = par:match(".+")
-			settings.main.TelegramToken = token
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.TelegramToken = token
+			settings();
 			sampAddChatMessage(SCRIPT_PREFIX .."Новый токен: ".. COLOR_YES .. token, SCRIPT_COLOR)
 		else
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /settgtoken [token]", SCRIPT_COLOR)
 		end
 	end)
+	sampRegisterChatCommand("tg", function(par)
+		if par:find(".+") then
+			local msg = par:match(".+")
+			sendTelegram(true,msg)
+			sampAddChatMessage(SCRIPT_PREFIX .."Сообщение в тг ".. COLOR_YES .."отправлено", SCRIPT_COLOR)
+		else
+			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /tg [сообщение]", SCRIPT_COLOR)
+		end
+	end)
 	sampRegisterChatCommand('rlavka',function() 
 		RadiusLavki = not RadiusLavki
 		imRLavka[0] = not imRLavka[0]
-		if RadiusLavki then
-			sampAddChatMessage(SCRIPT_PREFIX .."Радиус переносных лавок ".. COLOR_YES .."включен", SCRIPT_COLOR)
-		else
-			sampAddChatMessage(SCRIPT_PREFIX .."Радиус переносных лавок ".. COLOR_NO .."выключен", SCRIPT_COLOR)
-		end
+		Logger("Радиус переносных лавок "..(RadiusLavki and COLOR_YES.."включен" or COLOR_NO.."выключен"))
 	end)
 	sampRegisterChatCommand("settgchat", function(par)
 		if par:find("([A-Za-z0-9%a%s]+)") then
 			local chat = par:match("([A-Za-z0-9%a%s]+)")
-			settings.main.TelegramChat = chat
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.TelegramChat = chat
+			settings();
 			sampAddChatMessage(SCRIPT_PREFIX .."Новый чат: ".. COLOR_YES .. chat, SCRIPT_COLOR)
 		else
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /settgchat [chatid]", SCRIPT_COLOR)
@@ -560,20 +452,20 @@ function main()
 	sampRegisterChatCommand("setpin", function(par)
 		if par:find("([A-Za-z0-9%a%s]+)") then
 			local pin = par:match("([A-Za-z0-9%a%s]+)")
-			settings.main.bankPin = pin
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.bankPin = pin
+			settings();
 			sampAddChatMessage(SCRIPT_PREFIX .."Новый пин-код: ".. COLOR_YES .. pin, SCRIPT_COLOR)
 		else
-			settings.main.bankPin = ""
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.bankPin = ""
+			settings();
 			sampAddChatMessage(SCRIPT_PREFIX .."Пин-код ".. COLOR_YES .. "сброшен", SCRIPT_COLOR)
 		end
 	end)
 	sampRegisterChatCommand("setphone", function(par)
 		if par:find("([A-Za-z0-9%a%s]+)") then
 			local phone = par:match("([A-Za-z0-9%a%s]+)")
-			settings.main.PhNumber = phone
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.PhNumber = phone
+			settings();
 			sampAddChatMessage(SCRIPT_PREFIX .."Новый номер SA: ".. COLOR_YES .. phone, SCRIPT_COLOR)
 		else
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /setphone [phone]", SCRIPT_COLOR)
@@ -582,8 +474,8 @@ function main()
 	sampRegisterChatCommand("setphonevc", function(par)
 		if par:find("([A-Za-z0-9%a%s]+)") then
 			local phone = par:match("([A-Za-z0-9%a%s]+)")
-			settings.main.PhNumberVice = phone
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.PhNumberVice = phone
+			settings();
 			sampAddChatMessage(SCRIPT_PREFIX .."Новый номер VC: ".. COLOR_YES .. phone, SCRIPT_COLOR)
 		else
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /setphonevc [phone]", SCRIPT_COLOR)
@@ -602,8 +494,8 @@ function main()
 			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /nespit_dialog [id file]", SCRIPT_COLOR)
 		end
 	end)
-	if doesFileExist('moonloader/config/rmnspt/alert.mp3') then
-		audio = loadAudioStream('moonloader/config/rmnspt/alert.mp3')
+	if doesFileExist('moonloader/rmnsptScripts/Multitool-alert.mp3') then
+		audio = loadAudioStream('moonloader/rmnsptScripts/Multitool-alert.mp3')
 		setAudioStreamVolume(audio, 0.1)
 	end
 	while true do
@@ -614,15 +506,15 @@ function main()
 					if caseTimers[i] ~= -1 then 
 						caseTimers[i] = caseTimers[i]-1					
 						if caseTimers[i] == -1 then
-							if settings.cases.isTurned then
+							if settings.isTurned then
 								sampAddChatMessage(SCRIPT_PREFIX .."Используй сундук "..caseName[i], SCRIPT_COLOR)
 								caseTimers[i] = 300
-								if doesFileExist('moonloader/config/rmnspt/alert.mp3') then setAudioStreamState(audio, 1) end
+								if doesFileExist('moonloader/rmnsptScripts/Multitool-alert.mp3') then setAudioStreamState(audio, 1) end
 							end
 						end
 					end
 				end
-				if settings.clearMem.AutoCleaner then
+				if settings.AutoCleaner then
 					if memory.read(0x8E4CB4, 4, true) > 524288000 then
 						cleanStreamMemoryBuffer()
 					end
@@ -633,20 +525,8 @@ function main()
 		QuestBomj()
 		Kirka()
 		RadiusLavka()
-		kpztext = 'КПЗ'
-		if settings.AdvokatHelper.adhTurnedOn then
-			UpdateTD(zeki)
-			if settings.AdvokatHelper.adhAutoUpdate then
-				local nowTime = os.time()
-				kpztext = 'КПЗ (до автообновления '..timer-nowTime..' сек.)'
-				if nowTime >= timer then
-					sampSendChat("/zeks")
-				end
-			end
-			local l = #zeki-1
-			if l == -1 then l = 0 end
-			renderFontDrawText(font, kpztext, userscreenX/3 + 30, (userscreenY - 60) - l*15, 0xFFFFFFFF)
-		end
+		VCab()
+		HotelBoxes()
 		wait(0)
   end  
   wait(-1)
@@ -668,6 +548,7 @@ function updateScript()
 			updates = true
 			print("Загрузка закончена")
 			sampAddChatMessage(SCRIPT_PREFIX .."Скачивание завершено, перезагрузка скрипта...", SCRIPT_COLOR)
+			showCursor(false)
 			scr:reload()
 			showCursor(false)
 		end
@@ -675,14 +556,14 @@ function updateScript()
 end
 function updateCheck()
 	sampAddChatMessage(SCRIPT_PREFIX .."Проверяем наличие обновлений...", SCRIPT_COLOR)
-		local dir = getWorkingDirectory().."/config/rmnspt/info.upd"
-		local url = "https://github.com/romanespit/ArizonaMultitool/raw/main/config/rmnspt/info.upd"
+		local dir = getWorkingDirectory().."/rmnsptScripts/Multitool-info.upd"
+		local url = "https://github.com/romanespit/ArizonaMultitool/raw/main/rmnsptScripts/Multitool-info.upd"
 		downloadUrlToFile(url, dir, function(id, status, p1, p2)
 			if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 				lua_thread.create(function()
 					wait(1000)
-					if doesFileExist(getWorkingDirectory().."/config/rmnspt/info.upd") then
-						local f = io.open(getWorkingDirectory().."/config/rmnspt/info.upd", "r")
+					if doesFileExist(getWorkingDirectory().."/rmnsptScripts/Multitool-info.upd") then
+						local f = io.open(getWorkingDirectory().."/rmnsptScripts/Multitool-info.upd", "r")
 						local upd = decodeJson(f:read("*a"))
 						f:close()
 						if type(upd) == "table" then
@@ -698,14 +579,14 @@ function updateCheck()
 				end)
 			end
 		end)		
-		dir = getWorkingDirectory().."/config/rmnspt/update.txt"
-		url = "https://github.com/romanespit/ArizonaMultitool/raw/main/config/rmnspt/update.txt"
+		dir = getWorkingDirectory().."/rmnsptScripts/Multitool-update.txt"
+		url = "https://github.com/romanespit/ArizonaMultitool/raw/main/rmnsptScripts/Multitool-update.txt"
 		downloadUrlToFile(url, dir, function(id, status, p1, p2)
 			if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 				lua_thread.create(function()
 					wait(1000)
-					if doesFileExist(getWorkingDirectory().."/config/rmnspt/update.txt") then
-						local f = io.open(getWorkingDirectory().."/config/rmnspt/update.txt", "r")
+					if doesFileExist(getWorkingDirectory().."/rmnsptScripts/Multitool-update.txt") then
+						local f = io.open(getWorkingDirectory().."/rmnsptScripts/Multitool-update.txt", "r")
 						f:close()
 					end
 				end)
@@ -776,9 +657,9 @@ function FuncStatus(status)
 	return text
 end	
 function Logger(text)
-	if settings.main.logging == 1 then print("[".. os.date("%X") .."] "..text)		
-	elseif settings.main.logging == 2 then sampAddChatMessage(SCRIPT_PREFIX..text, SCRIPT_COLOR)
-	elseif settings.main.logging == 3 then 
+	if settings.logging == 1 then print("[".. os.date("%X") .."] "..text)		
+	elseif settings.logging == 2 then sampAddChatMessage(SCRIPT_PREFIX..text, SCRIPT_COLOR)
+	elseif settings.logging == 3 then 
 		sampAddChatMessage(SCRIPT_PREFIX..text, SCRIPT_COLOR)
 		print("[".. os.date("%X") .."] "..text)
 	end
@@ -829,7 +710,7 @@ function isCentralMarket(x, y)
 	return (x > 1044 and x < 1197 and y > -1565 and y < -1403)
 end
 function Kirka()
-	if settings.main.kirka then
+	if settings.kirka then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -843,8 +724,48 @@ function Kirka()
 		end
 	end
 end
+function VCab()
+	if settings.VCab and isViceCity() then
+		for a = 1, 2048 do
+			if sampIs3dTextDefined(a) then
+				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
+				local X, Y, Z = getCharCoordinates(PLAYER_PED)
+				local distances = getDistanceBetweenCoords2d(vposX, vposY, X, Y)
+				if isPointOnScreen(vposX, vposY, vposZ, 0.0) and string.find(string, "Место для легкового транспорта") and string.find(string, "Доступно") and distances > 4.0 then
+					local wposX, wposY = convert3DCoordsToScreen(vposX, vposY, vposZ)
+					renderFontDrawText(font, "Свободное место", wposX, wposY, 0xFF228B22)
+				end
+				if isPointOnScreen(vposX, vposY, vposZ, 0.0) and string.find(string, "Место для большого транспорта") and string.find(string, "Доступно") and distances > 4.0 then
+					local wposX, wposY = convert3DCoordsToScreen(vposX, vposY, vposZ)
+					renderFontDrawText(font, "Свободное место", wposX, wposY, 0xFFA5EF21)
+				end
+			end
+		end
+	end
+end
+function HotelBoxes()
+	if settings.HotelBoxes then
+		for a = 1, 2048 do
+			if sampIs3dTextDefined(a) then
+				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
+				local X, Y, Z = getCharCoordinates(PLAYER_PED)
+				local distances = getDistanceBetweenCoords2d(vposX, vposY, X, Y)
+				if string.find(string, "Бонусный Ларец") then
+					renderFontDrawText(font, "Не забудь забрать ларец из номера!", userscreenX/3 + 30, (userscreenY - 60), 0xFF228B22)
+				end
+				if string.find(string, "Статус дверей") and string.find(string, "Открыты") then					
+					renderFontDrawText(font, "Есть открытые номера", userscreenX/3 + 30, (userscreenY - 60), 0xFF228B22)
+					if isPointOnScreen(vposX, vposY, vposZ, 0.0) and distances > 4.0 then
+						local wposX, wposY = convert3DCoordsToScreen(vposX, vposY, vposZ)
+						renderFontDrawText(font, "Open", wposX, wposY, 0xFF228B22)
+					end
+				end
+			end
+		end
+	end
+end
 function QuestBomj() 
-	if settings.main.bomj then
+	if settings.bomj then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -859,7 +780,7 @@ function QuestBomj()
 	end
 end
 function QuestBots() 
-	if settings.main.qb then
+	if settings.qb then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -902,51 +823,51 @@ function isPlayerInWorld(interior_id)
 end
 function hook.onSetWeather(id)
 	actual.weather = id
-	if settings.climate.WeatherLock then
+	if settings.WeatherLock then
 		return false
 	else
 		imClWeatherValue[0] = id
 		imWeatherName = imWeatherNameList[id+1]
-		settings.climate.WeatherValue = id
-		inicfg.save(settings, 'rmnspt\\settings')
+		settings.WeatherValue = id
+		settings();
 	end
 end
 
 function hook.onSetPlayerTime(hour, min)
 	actual.time = hour
-	if settings.climate.TimeLock then
+	if settings.TimeLock then
 		return false
 	else
 		imClTimeValue[0] = hour
-		settings.climate.TimeValue = hour
-		inicfg.save(settings, 'rmnspt\\settings')
+		settings.TimeValue = hour
+		settings();
 	end
 end
 
 function hook.onSetWorldTime(hour)
 	actual.time = hour
-	if settings.climate.TimeLock then
+	if settings.TimeLock then
 		return false
 	else
 		imClTimeValue[0] = hour
-		settings.climate.TimeValue = hour
-		inicfg.save(settings, 'rmnspt\\settings')
+		settings.TimeValue = hour
+		settings();
 	end
 end
 
 function hook.onSetInterior(id)
 	local result = isPlayerInWorld(id)
-	if settings.climate.TimeLock then
-		setWorldTime(result and settings.climate.TimeValue or actual.time, true) 
+	if settings.TimeLock then
+		setWorldTime(result and settings.TimeValue or actual.time, true) 
 	end
-	if settings.climate.WeatherLock then 
-		setWorldWeather(result and settings.climate.WeatherValue or actual.weather, true)
+	if settings.WeatherLock then 
+		setWorldWeather(result and settings.WeatherValue or actual.weather, true)
 	end
 end
 function hook.onSetObjectMaterialText(ev, data)
 	local Object = sampGetObjectHandleBySampId(ev)
-	if doesObjectExist(Object) and getObjectModel(Object) == 14210 and string.find(data.text, "(.-) {30A332}Свободная!") then
-		if settings.main.lavka then
+	if doesObjectExist(Object) and (getObjectModel(Object) == 14210 or getObjectModel(Object) == 18663) and string.find(data.text, "(.-) {30A332}Свободная!") then
+		if settings.lavka then
 			local result, posX, posY, posZ = getObjectCoordinates(Object)
 			if (isObjectInArea2d(Object, CR_AREA[1], CR_AREA[2], CR_AREA[3], CR_AREA[4], false) and not isViceCity()) then
 				if posZ <= 20 then
@@ -987,23 +908,24 @@ function hook.onServerMessage(_,text)
 	if text:find("Вы использовали сундук с рулетками") then caseTimers[1] = 3600 end
 	if text:find("Вы использовали платиновый сундук с рулетками") then caseTimers[2] = 7200 end
 	if text:find("Вы использовали тайник Илона Маска") then caseTimers[3] = 7200 end
-	if text:find("испытал удачу") or text:find("Удача улыбнулась") or text:find("словил грядку") then
+	if text:find("словил грядку") then
 		sendTelegram(false,text)		
 		print("{FF0000}Выбивание: {FFFFFF}"..text)
+	end
+	if text:find("([A-Za-z0-9%a]+_[A-Za-z0-9%a]+) испытал удачу при открытии '([^']*)' и выиграл транспорт: (.+)") then
+		local nick, larec, prize = text:match("([A-Za-z0-9%a]+_[A-Za-z0-9%a]+) испытал удачу при открытии '([^']*)' и выиграл транспорт: (.+)")
+		local msg = string.format("[`".. os.date("%X") .."`] `%s` открыл *%s* и выбил `%s`",nick,larec,prize)
+		sendTelegram(false,msg)
+	end	
+	if text:find("Удача улыбнулась игроку ([A-Za-z0-9%a]+_[A-Za-z0-9%a]+) при открытии '([^']*)' и он выиграл предмет: (.+)") then
+		local nick, larec, prize = text:match("Удача улыбнулась игроку ([A-Za-z0-9%a]+_[A-Za-z0-9%a]+) при открытии '([^']*)' и он выиграл предмет: (.+)")
+		local msg = string.format("[`".. os.date("%X") .."`] #доесть@ArzNespitBot `%s` открыл *%s* и выбил `%s`",nick,larec,prize)
+		print("{FF0000}Выбивание: {FFFFFF}"..msg)
+		sendTelegram(true,msg)
 	end
 	if text:find("кикнул игрока "..GetNick(true)) then
 		sendTelegram(true,text)
 	end
-	if IsZeksResponse(text) then
-		if not settings.AdvokatHelper.adhSendOriginalMessage and settings.AdvokatHelper.adhTurnedOn then return false end
-	elseif text:match("Вы не состоите в мэрии!") and settings.AdvokatHelper.adhTurnedOn == true then
-		settings.AdvokatHelper.adhTurnedOn = false
-		imAdhTurnedOn[0] = settings.AdvokatHelper.adhTurnedOn
-		inicfg.save(settings, 'rmnspt\\settings')
-		timer = -1
-		sampAddChatMessage(SCRIPT_PREFIX .."Вы не адвокат! Advokat Helper ".. COLOR_NO .."выключен", SCRIPT_COLOR)
-		return false
-	end	
 end
 function setWorldTime(hour, no_save)
 	if tostring(hour):lower() == "off" then
@@ -1016,8 +938,8 @@ function setWorldTime(hour, no_save)
 		raknetEmulRpcReceiveBitStream(94, bs)
 		raknetDeleteBitStream(bs)
 		if no_save == nil then
-			settings.climate.TimeValue = hour
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings.TimeValue = hour
+			settings();
 		end
 		return nil
 	end
@@ -1035,22 +957,26 @@ function setWorldWeather(id, no_save)
 		raknetEmulRpcReceiveBitStream(152, bs)
 		raknetDeleteBitStream(bs)
 		if no_save == nil then
-			settings.climate.WeatherValue = id
+			settings.WeatherValue = id
 			if id >= 21 then imWeatherName = imWeatherNameList[22] else imWeatherName = imWeatherNameList[id+1] end
-			inicfg.save(settings, 'rmnspt\\settings')
+			settings();
 		end
 		return nil
 	end
 end
 -->> Telegram
 function sendTelegram(notification,msg)
-	if settings.main.TelegramNotifications then
+	if settings.TelegramNotifications then
 		local msg = tostring(msg):gsub('{......}', '')
 		msg = tostring(msg):gsub(' ', '%+')
 		msg = tostring(msg):gsub('\n', '%%0A')
-		local params = ""
+		msg = tostring(msg):gsub('#',"\\%%23")
+		msg = tostring(msg):gsub('%[',"\\%%5B")
+		msg = tostring(msg):gsub('%]',"\\%%5D")
+		msg = tostring(msg):gsub('@',"\\%%40")
+		local params = "&parse_mode=MarkdownV2"
 		if not notification then params = params.."&disable_notification=true" end
-		local url = 'https://api.telegram.org/bot'.. settings.main.TelegramToken ..'/sendMessage?chat_id='.. settings.main.TelegramChat .. params ..'&text=' .. u8(msg)
+		local url = 'https://api.telegram.org/bot'.. settings.TelegramToken ..'/sendMessage?chat_id='.. settings.TelegramChat .. params ..'&text=' .. u8(msg)
 		asyncHttpRequest('POST', url, nil, function(result) end, function(err) print('Ошибка при отправке в тг!') end)
 		
 		
@@ -1095,7 +1021,7 @@ end
 function hook.onDisplayGameText(style,time,text)
 	-- /jmeat
 	if text:match("You are hungry") or text:match("You are very hungry") then
-		if settings.main.autoeat then
+		if settings.autoeat then
 			if thread:status() == "dead" then
 				thread = lua_thread.create(function()
 					math.randomseed(os.clock())
@@ -1111,37 +1037,31 @@ function hook.onDisplayGameText(style,time,text)
 			end
 		end
 	end
+	if text:match("Style: ~g~Comfort!") then
+	end
+	if text:match("Style: ~r~Sport!") then
+	end
+	--Logger("S: "..style.." | T: ".. time.. " | Text: "..text)
 end
 function hook.onSendChat(message)
 	if not isViceCity() then 
-		message = message:gsub("%(алло%)", settings.main.PhNumber)
-		message = message:gsub("%(alo%)", settings.main.PhNumber)
+		message = message:gsub("%(алло%)", settings.PhNumber)
+		message = message:gsub("%(alo%)", settings.PhNumber)
 	else
-		message = message:gsub("%(алло%)", settings.main.PhNumberVice)
-		message = message:gsub("%(alo%)", settings.main.PhNumberVice)
+		message = message:gsub("%(алло%)", settings.PhNumberVice)
+		message = message:gsub("%(alo%)", settings.PhNumberVice)
 	end
 	message = message:gsub("%(id%)", tostring(myid))
 	message = message:gsub("%(ид%)", tostring(myid))
 	return {message}
 end
 function hook.onSendCommand(message)
-	if message == "/zeks" then 
-		zeki = {}
-		if settings.AdvokatHelper.adhTurnedOn then
-			if settings.AdvokatHelper.adhAutoUpdate then 
-				local nowTime = os.time()
-				timer = nowTime + settings.AdvokatHelper.adhUpdateTime
-			else
-				timer = -1
-			end
-		end
-	end
 	if not isViceCity() then 
-		message = message:gsub("%(алло%)", settings.main.PhNumber)
-		message = message:gsub("%(alo%)", settings.main.PhNumber)
+		message = message:gsub("%(алло%)", settings.PhNumber)
+		message = message:gsub("%(alo%)", settings.PhNumber)
 	else
-		message = message:gsub("%(алло%)", settings.main.PhNumberVice)
-		message = message:gsub("%(alo%)", settings.main.PhNumberVice)
+		message = message:gsub("%(алло%)", settings.PhNumberVice)
+		message = message:gsub("%(alo%)", settings.PhNumberVice)
 	end
 	message = message:gsub("%(id%)", tostring(myid))
 	message = message:gsub("%(ид%)", tostring(myid))
@@ -1153,9 +1073,9 @@ function hook.onCreate3DText(id,color,position,distance,testLOS,attachedPlayerId
 end
 function hook.onShowDialog(id, style, title, button1, button2, text)
 	if(id == 991 or id == 26559) then -- PIN CODE
-		if (settings.main.bankPin == "") then 
+		if (settings.bankPin == "") then 
 		else
-			sampSendDialogResponse(id, 1, 0, settings.main.bankPin)
+			sampSendDialogResponse(id, 1, 0, settings.bankPin)
 			sampCloseCurrentDialogWithButton(0)
 			return false
 		end
@@ -1177,11 +1097,9 @@ function hook.onShowDialog(id, style, title, button1, button2, text)
 		sampCloseCurrentDialogWithButton(0)
 		return false
 	end
-	title = title.." | ID: "..id
 	return {id,style,title,button1,button2,text}
 end
 function imgui.TextColoredRGB(string, max_float)
-
 	local style = imgui.GetStyle()
 	local colors = style.Colors
 	local clr = imgui.Col
@@ -1236,4 +1154,80 @@ function imgui.TextColoredRGB(string, max_float)
 	end
 	
 	render_text(string)
+end
+
+function MimStyle()
+    local style = imgui.GetStyle();
+    local colors = style.Colors;
+    style.Alpha = 1;
+    style.WindowPadding = imgui.ImVec2(8.00, 8.00);
+    style.WindowRounding = 12;
+    style.WindowBorderSize = 0;
+    style.WindowMinSize = imgui.ImVec2(32.00, 32.00);
+    style.WindowTitleAlign = imgui.ImVec2(0.50, 0.50);
+    style.ChildRounding = 6;
+    style.ChildBorderSize = 0;
+    style.PopupRounding = 12;
+    style.PopupBorderSize = 0;
+    style.FramePadding = imgui.ImVec2(10.00, 5.00);
+    style.FrameRounding = 7;
+    style.FrameBorderSize = 0;
+    style.ItemSpacing = imgui.ImVec2(5.00, 4.00);
+    style.ItemInnerSpacing = imgui.ImVec2(10.00, 4.00);
+    style.IndentSpacing = 20;
+    style.ScrollbarSize = 10;
+    style.ScrollbarRounding = 12;
+    style.GrabMinSize = 8;
+    style.GrabRounding = 12;
+    style.TabRounding = 7;
+    style.ButtonTextAlign = imgui.ImVec2(0.50, 0.50);
+    style.SelectableTextAlign = imgui.ImVec2(0.50, 0.50);
+    colors[imgui.Col.Text] = imgui.ImVec4(1.00, 1.00, 1.00, 1.00);
+    colors[imgui.Col.TextDisabled] = imgui.ImVec4(0.50, 0.50, 0.50, 1.00);
+    colors[imgui.Col.WindowBg] = imgui.ImVec4(0.20, 0.20, 0.20, 0.94);
+    colors[imgui.Col.ChildBg] = imgui.ImVec4(0.20, 0.20, 0.20, 0.94);
+    colors[imgui.Col.PopupBg] = imgui.ImVec4(0.20, 0.20, 0.20, 0.94);
+    colors[imgui.Col.Border] = imgui.ImVec4(0.43, 0.43, 0.50, 0.50);
+    colors[imgui.Col.BorderShadow] = imgui.ImVec4(0.00, 0.00, 0.00, 0.00);
+    colors[imgui.Col.FrameBg] = imgui.ImVec4(0.00, 0.26, 0.64, 0.54);
+    colors[imgui.Col.FrameBgHovered] = imgui.ImVec4(0.26, 0.59, 0.98, 0.40);
+    colors[imgui.Col.FrameBgActive] = imgui.ImVec4(0.26, 0.59, 0.98, 0.67);
+    colors[imgui.Col.TitleBg] = imgui.ImVec4(0.16, 0.29, 0.48, 0.79);
+    colors[imgui.Col.TitleBgActive] = imgui.ImVec4(0.16, 0.29, 0.48, 1.00);
+    colors[imgui.Col.TitleBgCollapsed] = imgui.ImVec4(0.16, 0.29, 0.48, 0.70);
+    colors[imgui.Col.MenuBarBg] = imgui.ImVec4(0.16, 0.29, 0.48, 0.78);
+    colors[imgui.Col.ScrollbarBg] = imgui.ImVec4(0.00, 0.00, 0.00, 0.59);
+    colors[imgui.Col.ScrollbarGrab] = imgui.ImVec4(0.34, 0.34, 0.34, 1.00);
+    colors[imgui.Col.ScrollbarGrabHovered] = imgui.ImVec4(0.41, 0.41, 0.41, 1.00);
+    colors[imgui.Col.ScrollbarGrabActive] = imgui.ImVec4(0.51, 0.51, 0.51, 1.00);
+    colors[imgui.Col.CheckMark] = imgui.ImVec4(0.23, 0.42, 0.70, 1.00);
+    colors[imgui.Col.SliderGrab] = imgui.ImVec4(0.16, 0.29, 0.48, 1.00);
+    colors[imgui.Col.SliderGrabActive] = imgui.ImVec4(0.22, 0.39, 0.64, 1.00);
+    colors[imgui.Col.Button] = imgui.ImVec4(0.18, 0.35, 0.58, 0.86);
+    colors[imgui.Col.ButtonHovered] = imgui.ImVec4(0.16, 0.29, 0.48, 1.00);
+    colors[imgui.Col.ButtonActive] = imgui.ImVec4(0.21, 0.38, 0.61, 1.00);
+    colors[imgui.Col.Header] = imgui.ImVec4(0.72, 0.72, 0.72, 0.31);
+    colors[imgui.Col.HeaderHovered] = imgui.ImVec4(0.18, 0.35, 0.58, 0.74);
+    colors[imgui.Col.HeaderActive] = imgui.ImVec4(0.18, 0.35, 0.58, 0.86);
+    colors[imgui.Col.Separator] = imgui.ImVec4(0.43, 0.43, 0.50, 0.50);
+    colors[imgui.Col.SeparatorHovered] = imgui.ImVec4(0.10, 0.40, 0.75, 0.78);
+    colors[imgui.Col.SeparatorActive] = imgui.ImVec4(0.10, 0.40, 0.75, 1.00);
+    colors[imgui.Col.ResizeGrip] = imgui.ImVec4(0.66, 0.66, 0.66, 0.31);
+    colors[imgui.Col.ResizeGripHovered] = imgui.ImVec4(0.77, 0.77, 0.77, 0.67);
+    colors[imgui.Col.ResizeGripActive] = imgui.ImVec4(0.18, 0.35, 0.58, 0.86);
+    colors[imgui.Col.Tab] = imgui.ImVec4(0.18, 0.35, 0.58, 0.51);
+    colors[imgui.Col.TabHovered] = imgui.ImVec4(0.18, 0.35, 0.58, 1.00);
+    colors[imgui.Col.TabActive] = imgui.ImVec4(0.24, 0.45, 0.75, 0.86);
+    colors[imgui.Col.TabUnfocused] = imgui.ImVec4(0.07, 0.10, 0.15, 0.97);
+    colors[imgui.Col.TabUnfocusedActive] = imgui.ImVec4(0.14, 0.26, 0.42, 1.00);
+    colors[imgui.Col.PlotLines] = imgui.ImVec4(0.61, 0.61, 0.61, 1.00);
+    colors[imgui.Col.PlotLinesHovered] = imgui.ImVec4(1.00, 0.43, 0.35, 1.00);
+    colors[imgui.Col.PlotHistogram] = imgui.ImVec4(0.90, 0.70, 0.00, 1.00);
+    colors[imgui.Col.PlotHistogramHovered] = imgui.ImVec4(1.00, 0.60, 0.00, 1.00);
+    colors[imgui.Col.TextSelectedBg] = imgui.ImVec4(0.26, 0.59, 0.98, 0.35);
+    colors[imgui.Col.DragDropTarget] = imgui.ImVec4(1.00, 1.00, 0.00, 0.90);
+    colors[imgui.Col.NavHighlight] = imgui.ImVec4(0.18, 0.35, 0.58, 0.86);
+    colors[imgui.Col.NavWindowingHighlight] = imgui.ImVec4(1.00, 1.00, 1.00, 0.70);
+    colors[imgui.Col.NavWindowingDimBg] = imgui.ImVec4(0.80, 0.80, 0.80, 0.20);
+    colors[imgui.Col.ModalWindowDimBg] = imgui.ImVec4(0.80, 0.80, 0.80, 0.35);
 end

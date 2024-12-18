@@ -239,7 +239,7 @@ imgui.OnFrame(function() return WinState[0] end,
 			if imgui.Checkbox(u8'Уведомления о свободных лавках '..faicons('store'), imLavka) then
 				settings.lavka = imLavka[0]
 				settings();
-				Logger("Уведомления о лавках "..(settings.lavka and COLOR_YES.."включены" or COLOR_NO.."выключены"))
+				Logger("Уведомления о лавках "..(imLavka[0] and COLOR_YES.."включены" or COLOR_NO.."выключены"))
 			end
 			if imgui.Checkbox(u8'Уведомления о свободных местах на АБ ViceCity '..faicons('store'), imVCab) then
 				settings.VCab = imVCab[0]
@@ -367,22 +367,6 @@ function onReceivePacket(id, bs)
 			end
 		end
 	end
-	--if settings.InCinema then
-	--	if id == 220 then
-	--		raknetBitStreamIgnoreBits(bs, 8)
-	--		if raknetBitStreamReadInt8(bs) == 12 then
-	--			return false
-	--		end
-	--	end
-	--end
-	--if settings.InHomeCinema then
-	--	if id == 220 then
-	--		raknetBitStreamIgnoreBits(bs, 8)
-	--		if raknetBitStreamReadInt8(bs) == 12 then
-	--			return false
-	--		end
-	--	end
-	--end
 end
 ------------
 function main()
@@ -405,26 +389,12 @@ function main()
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/nespit{FFFFFF} - главное меню", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/bcl{FFFFFF} - очистить память игры", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/rlavka{FFFFFF} - включить рендер кругов вокруг переносных лавок", SCRIPT_COLOR)
-		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/settgtoken{FFFFFF} - указать новый токен Telegram уведомлений", SCRIPT_COLOR)
-		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/settgchat{FFFFFF} - указать новый chatid Telegram уведомлений", SCRIPT_COLOR)
-		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setpin{FFFFFF} - указать новый PIN для автоввода в банке/приложении", SCRIPT_COLOR)
-		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setphone{FFFFFF} - указать новый телефон SA для авто замены (алло) и (alo)", SCRIPT_COLOR)
-		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/setphonevc{FFFFFF} - указать новый телефон VC для авто замены (алло) и (alo)", SCRIPT_COLOR)
 		sampAddChatMessage(SCRIPT_PREFIX .. COLOR_MAIN .."/tg{FFFFFF} - отправить сообщение себе в тг", SCRIPT_COLOR)
 	end)
 	sampRegisterChatCommand('nespit', function() WinState[0] = not WinState[0] end)
 	sampRegisterChatCommand('roma', function() WinState[0] = not WinState[0] end)	
 	sampRegisterChatCommand('bcl', cleanStreamMemoryBuffer)
-	sampRegisterChatCommand("settgtoken", function(par)
-		if par:find(".+") then
-			local token = par:match(".+")
-			settings.TelegramToken = token
-			settings();
-			sampAddChatMessage(SCRIPT_PREFIX .."Новый токен: ".. COLOR_YES .. token, SCRIPT_COLOR)
-		else
-			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /settgtoken [token]", SCRIPT_COLOR)
-		end
-	end)
+	
 	sampRegisterChatCommand("tg", function(par)
 		if par:find(".+") then
 			local msg = par:match(".+")
@@ -438,48 +408,6 @@ function main()
 		RadiusLavki = not RadiusLavki
 		imRLavka[0] = not imRLavka[0]
 		Logger("Радиус переносных лавок "..(RadiusLavki and COLOR_YES.."включен" or COLOR_NO.."выключен"))
-	end)
-	sampRegisterChatCommand("settgchat", function(par)
-		if par:find("([A-Za-z0-9%a%s]+)") then
-			local chat = par:match("([A-Za-z0-9%a%s]+)")
-			settings.TelegramChat = chat
-			settings();
-			sampAddChatMessage(SCRIPT_PREFIX .."Новый чат: ".. COLOR_YES .. chat, SCRIPT_COLOR)
-		else
-			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /settgchat [chatid]", SCRIPT_COLOR)
-		end
-	end)
-	sampRegisterChatCommand("setpin", function(par)
-		if par:find("([A-Za-z0-9%a%s]+)") then
-			local pin = par:match("([A-Za-z0-9%a%s]+)")
-			settings.bankPin = pin
-			settings();
-			sampAddChatMessage(SCRIPT_PREFIX .."Новый пин-код: ".. COLOR_YES .. pin, SCRIPT_COLOR)
-		else
-			settings.bankPin = ""
-			settings();
-			sampAddChatMessage(SCRIPT_PREFIX .."Пин-код ".. COLOR_YES .. "сброшен", SCRIPT_COLOR)
-		end
-	end)
-	sampRegisterChatCommand("setphone", function(par)
-		if par:find("([A-Za-z0-9%a%s]+)") then
-			local phone = par:match("([A-Za-z0-9%a%s]+)")
-			settings.PhNumber = phone
-			settings();
-			sampAddChatMessage(SCRIPT_PREFIX .."Новый номер SA: ".. COLOR_YES .. phone, SCRIPT_COLOR)
-		else
-			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /setphone [phone]", SCRIPT_COLOR)
-		end
-	end)
-	sampRegisterChatCommand("setphonevc", function(par)
-		if par:find("([A-Za-z0-9%a%s]+)") then
-			local phone = par:match("([A-Za-z0-9%a%s]+)")
-			settings.PhNumberVice = phone
-			settings();
-			sampAddChatMessage(SCRIPT_PREFIX .."Новый номер VC: ".. COLOR_YES .. phone, SCRIPT_COLOR)
-		else
-			sampAddChatMessage(SCRIPT_PREFIX .."Используйте: /setphonevc [phone]", SCRIPT_COLOR)
-		end
 	end)
 	sampRegisterChatCommand("nespit_dialog", function(par)		
 		if par:find("([0-9%a%s]+)") then

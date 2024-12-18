@@ -434,7 +434,7 @@ function main()
 					if caseTimers[i] ~= -1 then 
 						caseTimers[i] = caseTimers[i]-1					
 						if caseTimers[i] == -1 then
-							if settings.isTurned then
+							if settings.isTurned == true then
 								sampAddChatMessage(SCRIPT_PREFIX .."Используй сундук "..caseName[i], SCRIPT_COLOR)
 								caseTimers[i] = 300
 								if doesFileExist('moonloader/rmnsptScripts/Multitool-alert.mp3') then setAudioStreamState(audio, 1) end
@@ -442,7 +442,7 @@ function main()
 						end
 					end
 				end
-				if settings.AutoCleaner then
+				if settings.AutoCleaner == true then
 					if memory.read(0x8E4CB4, 4, true) > 524288000 then
 						cleanStreamMemoryBuffer()
 					end
@@ -638,7 +638,7 @@ function isCentralMarket(x, y)
 	return (x > 1044 and x < 1197 and y > -1565 and y < -1403)
 end
 function Kirka()
-	if settings.kirka then
+	if settings.kirka == true then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -653,7 +653,7 @@ function Kirka()
 	end
 end
 function VCab()
-	if settings.VCab and isViceCity() then
+	if settings.VCab == true and isViceCity() then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -672,7 +672,7 @@ function VCab()
 	end
 end
 function HotelBoxes()
-	if settings.HotelBoxes then
+	if settings.HotelBoxes == true then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -693,7 +693,7 @@ function HotelBoxes()
 	end
 end
 function QuestBomj() 
-	if settings.bomj then
+	if settings.bomj == true then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -708,7 +708,7 @@ function QuestBomj()
 	end
 end
 function QuestBots() 
-	if settings.qb then
+	if settings.qb == true then
 		for a = 1, 2048 do
 			if sampIs3dTextDefined(a) then
 				local string, color, vposX, vposY, vposZ, distance, ignoreWalls, playerId, vehicleId = sampGet3dTextInfoById(a)
@@ -751,7 +751,7 @@ function isPlayerInWorld(interior_id)
 end
 function hook.onSetWeather(id)
 	actual.weather = id
-	if settings.WeatherLock then
+	if settings.WeatherLock == true then
 		return false
 	else
 		imClWeatherValue[0] = id
@@ -763,7 +763,7 @@ end
 
 function hook.onSetPlayerTime(hour, min)
 	actual.time = hour
-	if settings.TimeLock then
+	if settings.TimeLock == true then
 		return false
 	else
 		imClTimeValue[0] = hour
@@ -774,7 +774,7 @@ end
 
 function hook.onSetWorldTime(hour)
 	actual.time = hour
-	if settings.TimeLock then
+	if settings.TimeLock == true then
 		return false
 	else
 		imClTimeValue[0] = hour
@@ -785,17 +785,17 @@ end
 
 function hook.onSetInterior(id)
 	local result = isPlayerInWorld(id)
-	if settings.TimeLock then
+	if settings.TimeLock == true then
 		setWorldTime(result and settings.TimeValue or actual.time, true) 
 	end
-	if settings.WeatherLock then 
+	if settings.WeatherLock == true then 
 		setWorldWeather(result and settings.WeatherValue or actual.weather, true)
 	end
 end
 function hook.onSetObjectMaterialText(ev, data)
 	local Object = sampGetObjectHandleBySampId(ev)
 	if doesObjectExist(Object) and (getObjectModel(Object) == 14210 or getObjectModel(Object) == 18663) and string.find(data.text, "(.-) {30A332}Свободная!") then
-		if settings.lavka then
+		if settings.lavka == true then
 			local result, posX, posY, posZ = getObjectCoordinates(Object)
 			if (isObjectInArea2d(Object, CR_AREA[1], CR_AREA[2], CR_AREA[3], CR_AREA[4], false) and not isViceCity()) then
 				if posZ <= 20 then
@@ -894,7 +894,7 @@ function setWorldWeather(id, no_save)
 end
 -->> Telegram
 function sendTelegram(notification,msg)
-	if settings.TelegramNotifications then
+	if settings.TelegramNotifications == true then
 		local msg = tostring(msg):gsub('{......}', '')
 		msg = tostring(msg):gsub(' ', '%+')
 		msg = tostring(msg):gsub('\n', '%%0A')
@@ -949,7 +949,7 @@ end
 function hook.onDisplayGameText(style,time,text)
 	-- /jmeat
 	if text:match("You are hungry") or text:match("You are very hungry") then
-		if settings.autoeat then
+		if settings.autoeat == true then
 			if thread:status() == "dead" then
 				thread = lua_thread.create(function()
 					math.randomseed(os.clock())
